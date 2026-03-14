@@ -1,0 +1,2 @@
+EnemyID,Name,HP,ATK,DEF,MoveSpeed,GoldReward
+1,Slime,10,5,3,2,100
