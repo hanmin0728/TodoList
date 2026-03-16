@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 9e7e5ca1163cf754f85c1eec18f17ca6
+guid: 1880f17431dfe104987c1944963d23a3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6414619476562663137
-    second: RZgHsZ05_0
+      213: -1291202924252101130
+    second: Background1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 0
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: RZgHsZ05_0
+      name: Background1_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f192e2a7291baf6a0800000000000000
-      internalID: -6414619476562663137
+      spriteID: 6f5020f08c9b41ee0800000000000000
+      internalID: -1291202924252101130
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      RZgHsZ05_0: -6414619476562663137
+      Background1_0: -1291202924252101130
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

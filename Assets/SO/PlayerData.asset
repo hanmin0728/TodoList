@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eeba8e35ed4e7484c9d6a120bfe27c76, type: 3}
   m_Name: PlayerData
   m_EditorClassIdentifier: Assembly-CSharp::PlayerData
-  scrollSpeed: 0.4
+  scrollSpeed: 0.2
   hp: 100
   attackRange: 1.5
   attackDamage: 10
