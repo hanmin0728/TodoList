@@ -2,15 +2,11 @@ using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [SerializeField] private ScrollingBackground background;
 
-    // Update is called once per frame
-    void Update()
+    public void MoveBackground(float speed)
     {
-        
+        if (background != null)
+            background.Scroll(speed);
     }
 }
