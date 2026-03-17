@@ -6,6 +6,8 @@ public class PlayerAttackState : BaseState<PlayerController>
 
     public override void Enter()
     {
+        Debug.Log("공격 상태 진입");
+        owner.Anim.SetTrigger(owner.AnimAttackHash);
     }
 
     public override void Update()

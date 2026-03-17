@@ -20,11 +20,14 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+
         StateMachine = new StateMachine<PlayerController>();
 
         MoveState = new PlayerMoveState(this, StateMachine);
         AttackState = new PlayerAttackState(this, StateMachine);
 
+        Anim = GetComponent<Animator>();
+        
         AnimWalkHash = Animator.StringToHash(data.walkBoolParam);
         AnimAttackHash = Animator.StringToHash(data.attacTriggerParam);
     }
@@ -48,8 +51,32 @@ public class PlayerController : MonoBehaviour
         Vector2 checkPos = (Vector2)transform.position + new Vector2(0.5f, 0);
 
         Collider2D hit = Physics2D.OverlapCircle(checkPos, data.attackRange, enemyLayer);
-
+        if (hit != null)
+        {
+            Debug.Log("감지된 적 이름: " + hit.gameObject.name);
+        }
         return hit != null; 
+    }
+
+    /// <summary>
+    /// 플레이어 공격 애니메이션 끝났을시 적 있는지 체크 후 플레이어 상태 변환
+    /// </summary>
+    public void OnAttackSequenceFinished()
+    {
+        if (CheckEnemyInRange())
+        {
+            Anim.SetTrigger(AnimAttackHash);
+        }
+        else
+        {
+            StateMachine.ChangeState(MoveState);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, data.attackRange);
     }
 
 }

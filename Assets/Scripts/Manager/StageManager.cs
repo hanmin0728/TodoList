@@ -8,14 +8,20 @@ public class StageManager : Singleton<StageManager>
     public int _currentWaveIndex = 1;
 
     [Header("설정")]
-    [SerializeField] private float _delayBetweenWaves = 3.0f; // 소환 완료 후 다음 웨이브까지 대기 시간
+    [SerializeField] private float _delayBetweenWaves = 300.0f; // 소환 완료 후 다음 웨이브까지 대기 시간
     private bool _isWaveActive = false;
 
     void Start()
     {
         // CSV 로딩 완료 후 첫 스테이지 시작
-        if (CSVManager.Instance.IsInitialized) StartWave(_currentStageID, _currentWaveIndex);
-        else CSVManager.Instance.OnLoadingComplete += () => StartWave(_currentStageID, _currentWaveIndex);
+        if (CSVManager.Instance.IsInitialized)
+        {
+            StartWave(_currentStageID, _currentWaveIndex);
+        }
+        else
+        {
+            CSVManager.Instance.OnLoadingComplete += () => StartWave(_currentStageID, _currentWaveIndex);
+        }
     }
 
     // 진입점 함수: 외부나 내부에서 스테이지 시작을 명령할 때 사용
@@ -45,19 +51,13 @@ public class StageManager : Singleton<StageManager>
         currentWaveData.enemyID = int.Parse(row["EnemyID"].ToString());
         currentWaveData.enemyCount = int.Parse(row["EnemyCount"].ToString());
 
-        Debug.Log(currentWaveData.StageID);
-        Debug.Log(currentWaveData.waveIndex);
-        Debug.Log(currentWaveData.enemyID);
-        Debug.Log(currentWaveData.enemyCount);
-
-
         StartCoroutine(WaveRoutine(currentWaveData));
     }
 
     private IEnumerator WaveRoutine(StageData data)
     {
         _isWaveActive = true;
-        Debug.Log($"<color=cyan>웨이브 시작:</color> Stage {data.StageID} - Wave {data.waveIndex}");
+        //Debug.Log($"<color=cyan>웨이브 시작:</color> Stage {data.StageID} - Wave {data.waveIndex}");
 
         for (int i = 0; i < data.enemyCount; i++)
         {
@@ -65,7 +65,7 @@ public class StageManager : Singleton<StageManager>
             yield return new WaitForSeconds(0.8f);
         }
 
-        Debug.Log("<color=white>소환 완료! 잠시 후 다음 웨이브로 넘어갑니다.</color>");
+        //Debug.Log("<color=white>소환 완료! 잠시 후 다음 웨이브로 넘어갑니다.</color>");
 
         yield return new WaitForSeconds(_delayBetweenWaves);
 

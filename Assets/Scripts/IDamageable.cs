@@ -1,16 +1,7 @@
 using UnityEngine;
 
-public class IDamageable : MonoBehaviour
+public interface IDamageable
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    // 데미지를 입을 때 호출 (데미지 양, 피격 위치)
+    void OnDamage(float damage);
 }
