@@ -7,12 +7,8 @@ public class ScrollingBackground : MonoBehaviour
 
     public void Scroll(float speed) //PlayerDataSO에 있는 속도
     {
-      currentOffset = Mathf.Repeat(currentOffset + speed * Time.deltaTime, 1f);
-    
+        currentOffset = Mathf.Repeat(currentOffset + speed * Time.deltaTime, 1f);
         backgroundRenderer.material.mainTextureOffset = new Vector2(currentOffset, 0);
     }
 
-    public void Stop()
-    {
-    }
 }

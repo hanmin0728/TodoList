@@ -17,10 +17,20 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     protected float currentHp;
     protected bool IsDead = false;
 
+    public float LastHitForce { get; private set; } 
+
     public Animator Anim { get; protected set; }
+    public SpriteRenderer Sprite { get; protected set; }
+    public Rigidbody2D Rigid2D { get; protected set; }
+
+    public Poolable Poolable { get; private set; }
+    
     public void Awake()
     {
         Anim = GetComponent<Animator>();
+        Rigid2D = GetComponent<Rigidbody2D>();
+        Sprite = GetComponent<SpriteRenderer>();
+        Poolable = GetComponent<Poolable>();
 
         StateMachine = new StateMachine<EnemyBase>();
 
@@ -28,6 +38,9 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         AttackState = new EnemyAttackState(this, StateMachine);
         HitState = new EnemyHitState(this, StateMachine);
         DieState = new EnemyDieState(this, StateMachine);
+    }
+    private void OnEnable()
+    {
     }
     public void Init(EnemyData newData)
     {
@@ -41,13 +54,23 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         if (StateMachine.CurrentState != null)
             StateMachine.CurrentState.Update();
     }
+    public void OnDieAnimationEnd()
+    {
+        if (Poolable == null)
+        {
+            Poolable = GetComponent<Poolable>();
+        }
 
-    public virtual void OnDamage(float damage)
+            Poolable.Release();
+    }
+
+
+    public virtual void OnDamage(float damage, float knockBackForce)
     {
         if (IsDead) return;
-
         currentHp -= damage;
-
+        LastHitForce = knockBackForce;
+        
         if (currentHp <= 0)
         {
             IsDead = true;
@@ -57,7 +80,6 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         else
         {
             StateMachine.ChangeState(HitState);
-            //피격 애니메이션 실행은 HitState에서 처리
         }
     }
 

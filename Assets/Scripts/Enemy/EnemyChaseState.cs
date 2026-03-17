@@ -6,16 +6,27 @@ public class EnemyChaseState : BaseState<EnemyBase>
 
     public override void Enter()
     {
+        owner.Anim.SetBool(EnemyAnimHash.isIdle, false);
     }
 
     public override void Update()
     {
-        //플레아어 쪽으로 다가와야함
+        Vector2 playerPos = GameManager.Instance.Player.transform.position;
+
+        float distance = Vector2.Distance(owner.transform.position, playerPos);
+
+        if (distance <= owner.data.attackRange)
+        {
+            owner.Rigid2D.linearVelocity = Vector2.zero;
+            stateMachine.ChangeState(owner.AttackState);
+            return;
+        }
+
+        owner.Rigid2D.linearVelocity = new Vector2(-owner.data.moveSpeed, owner.Rigid2D.linearVelocity.y);
     }
 
     public override void Exit()
     {
-    }
 
-    
+    }
 }

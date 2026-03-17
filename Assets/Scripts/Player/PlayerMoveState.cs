@@ -14,7 +14,6 @@ public class PlayerMoveState : BaseState<PlayerController>
     {
         if (owner.CheckEnemyInRange())
         {
-            Debug.Log("공격상태 진입");
             stateMachine.ChangeState(owner.AttackState);
         }
 

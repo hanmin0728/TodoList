@@ -27,7 +27,9 @@ public class PlayerController : MonoBehaviour
         AttackState = new PlayerAttackState(this, StateMachine);
 
         Anim = GetComponent<Animator>();
-        
+
+        GameManager.Instance.RegisterPlayer(this);
+
         AnimWalkHash = Animator.StringToHash(data.walkBoolParam);
         AnimAttackHash = Animator.StringToHash(data.attacTriggerParam);
     }
@@ -53,7 +55,7 @@ public class PlayerController : MonoBehaviour
         Collider2D hit = Physics2D.OverlapCircle(checkPos, data.attackRange, enemyLayer);
         if (hit != null)
         {
-            Debug.Log("감지된 적 이름: " + hit.gameObject.name);
+            //Debug.Log("감지된 적 이름: " + hit.gameObject.name);
         }
         return hit != null; 
     }
@@ -70,6 +72,22 @@ public class PlayerController : MonoBehaviour
         else
         {
             StateMachine.ChangeState(MoveState);
+        }
+    }
+
+    public void OnAttackHit()
+    {
+        Vector2 checkPos = (Vector2)transform.position + new Vector2(0.5f, 0);
+
+        // 범위 내의 모든 적 감지 
+        Collider2D[] hits = Physics2D.OverlapCircleAll(checkPos, data.attackRange, enemyLayer);
+
+        foreach (var hit in hits)
+        {
+            if (hit.TryGetComponent(out IDamageable enemy))
+            {
+                enemy.OnDamage(data.attackDamage, data.knockBackForce);
+            }
         }
     }
 

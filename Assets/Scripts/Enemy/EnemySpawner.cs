@@ -28,11 +28,12 @@ public class EnemySpawner : Singleton<EnemySpawner>
         newEnemyData.atk = float.Parse(row["ATK"].ToString());
         newEnemyData.def = float.Parse(row["DEF"].ToString());
         newEnemyData.moveSpeed = float.Parse(row["MoveSpeed"].ToString());
+        newEnemyData.attackRange = float.Parse(row["AttackRange"].ToString());
+        newEnemyData.attackDelay = float.Parse(row["AttackDelay"].ToString());
         newEnemyData.goldReward = float.Parse(row["GoldReward"].ToString());
 
-        Vector2 spawnPos = Vector2.zero;
+        Vector2 spawnPos = GameManager.Instance.GetSpawnPosition();
         GameObject obj = PoolManager.Instance.Spawn(targetPrefab, spawnPos, Quaternion.identity);
-        // 4. 소환된 적에게 데이터 주입
         obj.GetComponent<EnemyBase>().Init(newEnemyData);
     }
 
@@ -57,7 +58,7 @@ public class EnemySpawner : Singleton<EnemySpawner>
                 return null;
             }
 
-            // 찾은 프리팹을 딕셔너리에 저장해 둡니다. (다음번엔 로드하지 않음)
+            // 찾은 프리팹을 딕셔너리에 저장
             prefabCache[id] = loadedPrefab;
         }
 

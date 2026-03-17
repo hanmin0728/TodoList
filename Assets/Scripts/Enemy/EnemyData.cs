@@ -8,6 +8,8 @@ public class EnemyData
     public float atk;
     public float def;
     public float moveSpeed;
+    public float attackRange;
+    public float attackDelay;
     public float goldReward;
 }
 
