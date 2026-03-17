@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -39,8 +40,10 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         HitState = new EnemyHitState(this, StateMachine);
         DieState = new EnemyDieState(this, StateMachine);
     }
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
+        IsDead = false;
+        if (Sprite != null) Sprite.color = Color.white;
     }
     public void Init(EnemyData newData)
     {
@@ -71,6 +74,9 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         currentHp -= damage;
         LastHitForce = knockBackForce;
         
+        Rigid2D.linearVelocity = new Vector2(LastHitForce, 0);
+        PlayHitEffect();
+
         if (currentHp <= 0)
         {
             IsDead = true;
@@ -83,8 +89,37 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         }
     }
 
+
+    public virtual void PlayHitEffect()
+    {
+        StartCoroutine(FlashCo());
+    }
+
+    private IEnumerator FlashCo()
+    {
+        if (Sprite == null) yield break;
+
+        Color originalColor = Sprite.color;
+
+        // 알파값 조절
+        Sprite.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
+
+        yield return new WaitForSeconds(0.1f);
+
+        Sprite.color = originalColor;
+    }
+
     /// <summary>
     /// 자식 클래스에서 본인만의 공격 방식 구현
     /// </summary>
-    public abstract void PerformAttack(); 
+    public abstract void PerformAttack();
+
+    /// <summary>
+    /// 애니메이션 이벤트에서 호출
+    /// </summary>
+    public virtual void OnEnemyAttackHit()
+    {
+       
+    }
+
 }

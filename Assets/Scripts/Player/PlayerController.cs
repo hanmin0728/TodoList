@@ -1,5 +1,6 @@
 using UnityEngine;
-using UnityEngine.Rendering;
+using System.Collections;
+
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,11 +13,15 @@ public class PlayerController : MonoBehaviour
     public PlayerData data;
 
     public Animator Anim { get; private set; }
+    public SpriteRenderer SpriteRenderer { get; private set; }
+    
     [SerializeField] private LayerMask enemyLayer;
 
-    public int AnimWalkHash { get; private set; }
     public int AnimAttackHash { get; private set; }
 
+    private float currentHp;
+
+    public bool IsAttackAnimationFinished { get; set; } = true;
 
     private void Awake()
     {
@@ -27,17 +32,24 @@ public class PlayerController : MonoBehaviour
         AttackState = new PlayerAttackState(this, StateMachine);
 
         Anim = GetComponent<Animator>();
+        SpriteRenderer = GetComponent<SpriteRenderer>();
 
         GameManager.Instance.RegisterPlayer(this);
 
-        AnimWalkHash = Animator.StringToHash(data.walkBoolParam);
         AnimAttackHash = Animator.StringToHash(data.attacTriggerParam);
     }
 
     private void Start()
     {
+        Init();
+    }
+
+    public void Init()
+    {
+        currentHp = data.hp; 
         StateMachine.Initialize(MoveState);
     }
+
 
     private void Update()
     {
@@ -61,7 +73,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 플레이어 공격 애니메이션 끝났을시 적 있는지 체크 후 플레이어 상태 변환
+    /// 플레이어 공격 애니메이션 끝났을시 적 있는지 체크 후 플레이어 상태 변환 
     /// </summary>
     public void OnAttackSequenceFinished()
     {
@@ -73,7 +85,7 @@ public class PlayerController : MonoBehaviour
         {
             StateMachine.ChangeState(MoveState);
         }
-    }
+    } 
 
     public void OnAttackHit()
     {
@@ -89,6 +101,36 @@ public class PlayerController : MonoBehaviour
                 enemy.OnDamage(data.attackDamage, data.knockBackForce);
             }
         }
+    }
+
+    /// <summary>
+    /// 데미지 받는 함수
+    /// </summary>
+    public void TakeDamage(float damage)
+    {
+        currentHp -= damage;
+
+        StartCoroutine(PlayerFlashCo());
+
+        if (currentHp <= 0)
+        {
+            Die();
+        }
+    }
+
+    private IEnumerator PlayerFlashCo()
+    {
+        Color originalColor = SpriteRenderer.color;
+
+        // 피격 시 빨간색으로 변경
+        SpriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        SpriteRenderer.color = originalColor;
+    }
+
+    private void Die()
+    {
+        Debug.Log("플레이어 사망"); 
     }
 
     private void OnDrawGizmosSelected()

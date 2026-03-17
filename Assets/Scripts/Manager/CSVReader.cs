@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-public class CSVReader : MonoBehaviour
+public static class CSVReader 
 {
     // CSV의 쉼표와 따옴표 등을 구분하기 위한 정규표현식
     static string SPLIT_RE = @",(?=(?:[^""]*""[^""]*"")*(?![^""]*""))";

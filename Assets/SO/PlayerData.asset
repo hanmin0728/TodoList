@@ -15,8 +15,7 @@ MonoBehaviour:
   scrollSpeed: 0.2
   hp: 100
   attackRange: 1.5
-  attackDamage: 5
+  attackDamage: 3
   attackDelay: 5
   knockBackForce: 3
-  walkBoolParam: isWalking
   attacTriggerParam: isAttack

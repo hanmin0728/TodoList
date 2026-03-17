@@ -14,6 +14,5 @@ public class PlayerData : ScriptableObject
     public float knockBackForce = 3f;
 
     [Header("애니메이션 파라미터")]
-    public string walkBoolParam = "isWalking";
     public string attacTriggerParam = "isAttack";
 }

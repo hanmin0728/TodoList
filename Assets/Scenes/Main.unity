@@ -766,7 +766,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageManager
   _currentStageID: 101
   _currentWaveIndex: 1
-  _delayBetweenWaves: 3
+  _delayBetweenWaves: 30
 --- !u!4 &1458611458
 Transform:
   m_ObjectHideFlags: 0
