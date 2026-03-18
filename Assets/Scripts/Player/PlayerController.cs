@@ -25,7 +25,6 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-
         StateMachine = new StateMachine<PlayerController>();
 
         MoveState = new PlayerMoveState(this, StateMachine);
@@ -36,7 +35,7 @@ public class PlayerController : MonoBehaviour
 
         GameManager.Instance.RegisterPlayer(this);
 
-        AnimAttackHash = Animator.StringToHash(data.attacTriggerParam);
+        AnimAttackHash = Animator.StringToHash(data.attacAnimationParam);
     }
 
     private void Start()
@@ -59,7 +58,6 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 플레이어 앞에 적이 있는지 체크 후 bool 값 반환
     /// </summary>
-    /// <returns></returns>
     public bool CheckEnemyInRange()
     {
         Vector2 checkPos = (Vector2)transform.position + new Vector2(0.5f, 0);
@@ -73,20 +71,16 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 플레이어 공격 애니메이션 끝났을시 적 있는지 체크 후 플레이어 상태 변환 
-    /// </summary>
+    /// 공격 애니메이션 재생 완료시 애니메이션 이벤트에서 호출 
+    /// /// </summary>
     public void OnAttackSequenceFinished()
     {
-        if (CheckEnemyInRange())
-        {
-            Anim.SetTrigger(AnimAttackHash);
-        }
-        else
-        {
-            StateMachine.ChangeState(MoveState);
-        }
+        IsAttackAnimationFinished = true;
     } 
 
+    /// <summary>
+    /// 애니메이션 이벤트에서 호출 실제 공격 함수
+    /// </summary>
     public void OnAttackHit()
     {
         Vector2 checkPos = (Vector2)transform.position + new Vector2(0.5f, 0);
@@ -103,9 +97,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 데미지 받는 함수
-    /// </summary>
+
     public void TakeDamage(float damage)
     {
         currentHp -= damage;
@@ -118,11 +110,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// 피격시 간단한 이펙트
+    /// </summary>
     private IEnumerator PlayerFlashCo()
     {
         Color originalColor = SpriteRenderer.color;
 
-        // 피격 시 빨간색으로 변경
         SpriteRenderer.color = Color.red;
         yield return new WaitForSeconds(0.1f);
         SpriteRenderer.color = originalColor;

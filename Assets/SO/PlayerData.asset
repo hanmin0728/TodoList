@@ -16,6 +16,6 @@ MonoBehaviour:
   hp: 100
   attackRange: 1.5
   attackDamage: 3
-  attackDelay: 5
+  attackDelay: 3
   knockBackForce: 3
-  attacTriggerParam: isAttack
+  attacAnimationParam: PlayerAttack
