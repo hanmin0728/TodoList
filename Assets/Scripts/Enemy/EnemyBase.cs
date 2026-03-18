@@ -6,7 +6,7 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 {
     public StateMachine<EnemyBase> StateMachine { get; protected set; }
 
-    #region 적에게 존재하는 상태 패턴
+    #region 상태 패턴
     public EnemyChaseState ChaseState { get; protected set; }
     public EnemyAttackState AttackState { get; protected set; }
     public EnemyHitState HitState { get; protected set; }
@@ -25,7 +25,10 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     public Rigidbody2D Rigid2D { get; protected set; }
 
     public Poolable Poolable { get; private set; }
-    
+
+    // 공격 애니메이션 실행 완료 여부
+    public bool IsAttackAnimationFinished { get; set; } = true;
+
     public void Awake()
     {
         Anim = GetComponent<Animator>();
@@ -45,27 +48,22 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         IsDead = false;
         if (Sprite != null) Sprite.color = Color.white;
     }
+
     public void Init(EnemyData newData)
     {
         data = newData;
         currentHp = data.hp; // 최대 체력 정보를 가져와 현재 체력 초기화
-
+        IsAttackAnimationFinished = false;
         StateMachine.Initialize(ChaseState);
     }
+
     protected virtual void Update()
     {
         if (StateMachine.CurrentState != null)
             StateMachine.CurrentState.Update();
     }
-    public void OnDieAnimationEnd()
-    {
-        if (Poolable == null)
-        {
-            Poolable = GetComponent<Poolable>();
-        }
 
-            Poolable.Release();
-    }
+ 
 
 
     public virtual void OnDamage(float damage, float knockBackForce)
@@ -119,7 +117,26 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     /// </summary>
     public virtual void OnEnemyAttackHit()
     {
-       
     }
 
+    /// <summary>
+    /// 애니메이션 이벤트에서 호출
+    /// </summary>
+    public void OnAttackSequenceFinished()
+    {
+        IsAttackAnimationFinished = true;
+    }
+
+    /// <summary>
+    /// 애니메이션 이벤트에서 호출
+    /// </summary>
+    public void OnDieAnimationEnd()
+    {
+        if (Poolable == null)
+        {
+            Poolable = GetComponent<Poolable>();
+        }
+
+        Poolable.Release();
+    }
 }

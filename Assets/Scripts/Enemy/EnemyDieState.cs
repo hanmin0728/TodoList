@@ -8,7 +8,7 @@ public class EnemyDieState : BaseState<EnemyBase>
     
     public override void Enter()
     {
-        owner.Anim.SetTrigger(EnemyAnimHash.isDie);
+        owner.Anim.Play(EnemyAnimHash.isDie, 0, 0f);
         owner.Rigid2D.linearVelocity = Vector2.zero;
         owner.GetComponent<Collider2D>().enabled = false;
     }

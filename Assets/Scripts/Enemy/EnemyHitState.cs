@@ -12,9 +12,7 @@ public class EnemyHitState : BaseState<EnemyBase>
     public override void Enter()
     {
         _timer = _hitStunDuration;
-        owner.Anim.SetTrigger(EnemyAnimHash.isHit);
-
-      
+        owner.Anim.Play(EnemyAnimHash.isHit, 0, 0f);
     }
 
     public override void Exit()

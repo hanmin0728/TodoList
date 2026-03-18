@@ -6,7 +6,7 @@ public class EnemyChaseState : BaseState<EnemyBase>
 
     public override void Enter()
     {
-        owner.Anim.SetBool(EnemyAnimHash.isIdle, false);
+        owner.Anim.Play(EnemyAnimHash.isWalk, 0, 0f);
     }
 
     public override void Update()

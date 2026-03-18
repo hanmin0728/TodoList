@@ -6,37 +6,49 @@ public class EnemyAttackState : BaseState<EnemyBase>
     {
     }
 
-    private float _attackTimer;
+    private float attackTimer;
+
+    // 공격 후 딜레이 상태인지 확인
+    private bool isWaitingForNextAttack;
 
     public override void Enter()
     {
+        isWaitingForNextAttack = false;
         owner.PerformAttack();
-        _attackTimer = owner.data.attackDelay;
-
-        owner.Anim.SetBool(EnemyAnimHash.isIdle, true);
+        attackTimer = owner.data.attackDelay;
     }
 
     public override void Update()
     {
-        //공격 대기중에 거리가 멀어질시 추적 상태로 전환
-        float distance = Vector2.Distance(owner.transform.position, GameManager.Instance.Player.transform.position);
-        if (distance > owner.data.attackRange)
+        if (owner.IsAttackAnimationFinished && !isWaitingForNextAttack)
         {
-            stateMachine.ChangeState(owner.ChaseState);
-            return; 
+            isWaitingForNextAttack = true; // 대기 상태 전환
+            owner.Anim.Play(EnemyAnimHash.isIdle, 0, 0f);
         }
 
-        _attackTimer -= Time.deltaTime;
-        if (_attackTimer <= 0f) //딜레이 기다리고 공격
+        if (owner.IsAttackAnimationFinished) //공격 대기중 플레이어 멀어질시 추적
         {
-            owner.PerformAttack(); 
-            _attackTimer = owner.data.attackDelay; 
+            float distance = Vector2.Distance(owner.transform.position, GameManager.Instance.Player.transform.position);
+            if (distance > owner.data.attackRange)
+            {
+                stateMachine.ChangeState(owner.ChaseState);
+                return;
+            }
+        }
+
+        attackTimer -= Time.deltaTime;
+
+        if (attackTimer <= 0f && owner.IsAttackAnimationFinished)
+        {
+            isWaitingForNextAttack = false;
+            owner.PerformAttack();
+            attackTimer = owner.data.attackDelay; 
         }
     }
 
 
     public override void Exit()
     {
-        owner.Anim.SetBool(EnemyAnimHash.isIdle, false);
+     
     }
 }
