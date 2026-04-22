@@ -6,7 +6,7 @@ public class UpgradeData
     public string Name;
     public float BaseValue;         // 기본 수치
     public float IncreasePerLevel;  // 레벨당 증가 수치
-    public long BaseCost;           // 시작 비용
+    public double BaseCost;           // 시작 비용
     public float CostMultiplier;    // 비용 증가 계수
     public int MaxLevel;
 
