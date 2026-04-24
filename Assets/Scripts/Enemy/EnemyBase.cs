@@ -77,16 +77,19 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
 
         if (currentHp <= 0)
         {
-            IsDead = true;
-            StateMachine.ChangeState(DieState); // 죽음 상태로 전환 
-            //리워드 지급 및 애니메이션 실행은 DieState에서 처리
+            Die();
         }
         else
         {
             StateMachine.ChangeState(HitState);
         }
     }
-
+    public void Die()
+    {
+        IsDead = true;
+        CurrencyManager.Instance.AddGold(data.goldReward);
+        StateMachine.ChangeState(DieState); // 죽음 상태로 전환 
+    }
 
     public virtual void PlayHitEffect()
     {

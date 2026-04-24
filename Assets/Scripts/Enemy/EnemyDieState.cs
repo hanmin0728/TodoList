@@ -11,6 +11,8 @@ public class EnemyDieState : BaseState<EnemyBase>
         owner.Anim.Play(EnemyAnimHash.isDie, 0, 0f);
         owner.Rigid2D.linearVelocity = Vector2.zero;
         owner.GetComponent<Collider2D>().enabled = false;
+
+        
     }
 
     public override void Exit()

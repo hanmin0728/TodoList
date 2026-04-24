@@ -30,7 +30,7 @@ public class EnemySpawner : Singleton<EnemySpawner>
         newEnemyData.moveSpeed = float.Parse(row["MoveSpeed"].ToString());
         newEnemyData.attackRange = float.Parse(row["AttackRange"].ToString());
         newEnemyData.attackDelay = float.Parse(row["AttackDelay"].ToString());
-        newEnemyData.goldReward = float.Parse(row["GoldReward"].ToString());
+        newEnemyData.goldReward = long.Parse(row["GoldReward"].ToString());
 
         Vector2 spawnPos = GameManager.Instance.GetSpawnPosition();
         GameObject obj = PoolManager.Instance.Spawn(targetPrefab, spawnPos, Quaternion.identity);

@@ -5,7 +5,6 @@ public class UpgradeUIManager : MonoBehaviour
 {
     public GameObject upgradeCell;
     public Transform contentParent;
-
     private List<UpgradeCell> _activeCells = new List<UpgradeCell>();
     private bool _isInitialized = false;
 

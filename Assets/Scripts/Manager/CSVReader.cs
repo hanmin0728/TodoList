@@ -14,7 +14,7 @@ public static class CSVReader
 
         // Resources 폴더에서 파일을 읽어옴 (확장자 제외)
         TextAsset data = Resources.Load(file) as TextAsset;
-
+         
         if (data == null)
         {
             Debug.LogError($"[CSVReader] 파일을 찾을 수 없습니다: Resources/{file}");

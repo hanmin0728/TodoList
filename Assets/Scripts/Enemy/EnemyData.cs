@@ -10,7 +10,7 @@ public class EnemyData
     public float moveSpeed;
     public float attackRange;
     public float attackDelay;
-    public float goldReward;
+    public long goldReward;
 }
 
 public enum EnemyType
