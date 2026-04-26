@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0a7223af4d3dfd54ca0b37664efbba9a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Inputs/Input_Type_1.prefab
+  uploadId: 767981

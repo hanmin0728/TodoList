@@ -1,3 +1,4 @@
+using Mono.Cecil;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,10 +15,18 @@ public class UpgradeCell : MonoBehaviour
     private UpgradeData data;
     private int currentLevel = 0;
 
-    public void Setup(UpgradeData upgradeData)
+    /// <summary>
+    /// 매니저가 이 셀을 생성할 때 한 번만 호출하는 세팅 함수
+    /// </summary>
+    public void Setup(UpgradeData upgradeData, Sprite icon)
     {
         data = upgradeData;
-        nameText.text = data.Name;
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = icon;
+        }
+
         UpdateUI();
     }
 
@@ -33,6 +42,8 @@ public class UpgradeCell : MonoBehaviour
 
     public void UpdateUI()
     {
+        nameText.text = data.Name;
+
         float currentValue = data.BaseValue + (currentLevel * data.IncreasePerLevel);
         float nextValue = data.BaseValue + ((currentLevel + 1) * data.IncreasePerLevel);
         double currentCost = data.BaseCost * Mathf.Pow(data.CostMultiplier, currentLevel);

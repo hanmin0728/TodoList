@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 491cf2339a13b3d409da9521393d5c41
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Slots/Slot_Passive.prefab
+  uploadId: 767981

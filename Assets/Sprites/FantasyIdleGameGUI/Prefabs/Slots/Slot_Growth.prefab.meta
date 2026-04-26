@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4424a133d9ed4dc499b909ac1129436c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Slots/Slot_Growth.prefab
+  uploadId: 767981

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e34411a6e93f8224fb4cc55b840c16fe
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Resources/Fonts/TextMeshPro SDF/Montserrat-Bold
+    SDF.asset
+  uploadId: 767981

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1133ad8bc57ce9845b47c785c185d739
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Resources/Fonts/TextMeshPro SDF/MONTSERRAT-MEDIUM
+    SDF.asset
+  uploadId: 767981

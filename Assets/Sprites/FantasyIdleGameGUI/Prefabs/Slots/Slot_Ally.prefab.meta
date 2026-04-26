@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a4eafe247b2e562438a436f12ca6e120
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Slots/Slot_Ally.prefab
+  uploadId: 767981

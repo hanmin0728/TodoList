@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ca2aa2ba99885e64db4c8e4438189279
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/ProgressBars/ProgressBar_Type_1.prefab
+  uploadId: 767981

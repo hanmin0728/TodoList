@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a3640708df7ca004a9c4c00dcf4d6620
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Slots/Slot_Ascend.prefab
+  uploadId: 767981

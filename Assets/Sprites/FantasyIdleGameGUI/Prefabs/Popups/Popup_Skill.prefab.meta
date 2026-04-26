@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: dff0dac5602f6154aad51965cba76009
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Popups/Popup_Skill.prefab
+  uploadId: 767981

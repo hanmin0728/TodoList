@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0ba7284c377d76045901969acf643955
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Buttons/Btn_Type_0.prefab
+  uploadId: 767981

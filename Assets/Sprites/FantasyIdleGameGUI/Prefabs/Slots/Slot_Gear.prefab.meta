@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cf9437b0d12cd2a419957b533bb5e89e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324788
+  packageName: Mobile Fantasy Idle UI Kit
+  packageVersion: 1.0
+  assetPath: Assets/FantasyIdleGameGUI/Prefabs/Slots/Slot_Gear.prefab
+  uploadId: 767981

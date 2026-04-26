@@ -1,10 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public struct UpgradeIconMapping
+{
+    public string statID;      // CSV에 적힌 ID
+    public Sprite iconSprite; 
+}
+
 public class UpgradeUIManager : MonoBehaviour
 {
-    public GameObject upgradeCell;
-    public Transform contentParent;
+    [SerializeField] private GameObject upgradeCell;
+    [SerializeField] private Transform contentParent;
+
+    [SerializeField] private List<UpgradeIconMapping> iconMappings = new List<UpgradeIconMapping>();
+
     private List<UpgradeCell> _activeCells = new List<UpgradeCell>();
     private bool _isInitialized = false;
 
@@ -20,6 +30,7 @@ public class UpgradeUIManager : MonoBehaviour
             CSVManager.Instance.OnLoadingComplete += InitializeUI;
         }
     }
+
     /// <summary>
     /// 처음 UI 켰을때만 생성 
     /// </summary>
@@ -35,7 +46,9 @@ public class UpgradeUIManager : MonoBehaviour
 
             // 데이터 파싱 및 초기 셋업
             UpgradeData data = ParseRowToData(row);
-            itemScript.Setup(data);
+
+            Sprite matchedIcon = GetIconByID(data.ID);
+            itemScript.Setup(data, matchedIcon);
 
             _activeCells.Add(itemScript);
         }
@@ -57,6 +70,22 @@ public class UpgradeUIManager : MonoBehaviour
             // UpdateUI()는 내부 데이터(레벨 등)를 기반으로 텍스트만 다시 그리는 함수
             cell.UpdateUI();
         }
+    }
+
+    /// <summary>
+    /// ID를 넣으면 매핑된 아이콘을 반환
+    /// </summary>
+    private Sprite GetIconByID(string id)
+    {
+        foreach (var mapping in iconMappings)
+        {
+            if (mapping.statID == id)
+                return mapping.iconSprite;
+        }
+
+        Debug.LogWarning($"[{id}]에 해당하는 아이콘을 찾지 못함");
+
+        return null; 
     }
 
     //Dictionary를 Data 객체로 변환
