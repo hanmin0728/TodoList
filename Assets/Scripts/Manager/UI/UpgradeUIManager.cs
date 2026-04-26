@@ -36,6 +36,8 @@ public class UpgradeUIManager : MonoBehaviour
     /// </summary>
     private void InitializeUI()
     {
+        CSVManager.Instance.OnLoadingComplete -= InitializeUI;
+
         if (_isInitialized) return;
 
         var table = CSVManager.Instance.GetTable("UpgradeTable");

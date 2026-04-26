@@ -14,7 +14,7 @@ public class SaveData
 [System.Serializable]
 public class StatSaveData
 {
-    public string StatID; // CSV의 StatID (예: "Atk")
+    public string StatID; // CSV의 StatID 
     public int Level;     // 현재 레벨
 
     public StatSaveData(string id, int level)

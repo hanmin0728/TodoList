@@ -7,9 +7,15 @@ public class GoldBarUI : MonoBehaviour
 
     private void Start()
     {
-        UpdateGoldUI(SaveManager.Instance.CurrentData.Gold);
-     
+        // 이미 로드가 끝났다면 바로 표시
+        if (SaveManager.Instance.CurrentData != null)
+        {
+            UpdateUI();
+        }
+
         CurrencyManager.Instance.OnGoldChanged += UpdateGoldUI;
+
+        SaveManager.Instance.OnDataLoaded += UpdateUI;
     }
 
     private void OnDestroy()
@@ -25,6 +31,11 @@ public class GoldBarUI : MonoBehaviour
     /// </summary>
     private void UpdateGoldUI(long currentGold)
     {
-        _goldText.text = currentGold.ToString("N0");
+        _goldText.text = CurrencyFormatter.Format(currentGold);
+    }
+
+    private void UpdateUI()
+    {
+        UpdateGoldUI(SaveManager.Instance.CurrentData.Gold);
     }
 }

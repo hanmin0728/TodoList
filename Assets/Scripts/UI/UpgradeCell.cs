@@ -53,7 +53,7 @@ public class UpgradeCell : MonoBehaviour
         if (currentLevel >= data.MaxLevel)
             costText.text = "MAX";
         else
-            costText.text = $"Cost: {currentCost:N0}"; // N0: 천단위 콤마
+            costText.text = CurrencyFormatter.Format(currentCost); 
     }
 
 }

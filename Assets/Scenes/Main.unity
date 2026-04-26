@@ -712,7 +712,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 1
-  m_Spacing: 80
+  m_Spacing: 60
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -2727,6 +2727,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1640860881}
   - component: {fileID: 1640860882}
+  - component: {fileID: 1640860883}
   m_Layer: 5
   m_Name: Gold
   m_TagString: Untagged
@@ -2776,6 +2777,19 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &1640860883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1640860880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bac9b362a0e457a4a8fc221b19923c31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoldBarUI
+  _goldText: {fileID: 691907114}
 --- !u!1001 &1677436003
 PrefabInstance:
   m_ObjectHideFlags: 0
