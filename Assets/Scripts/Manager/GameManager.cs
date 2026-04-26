@@ -4,8 +4,8 @@ using UnityEngine.UI;
 public class GameManager : Singleton<GameManager>
 {
     [SerializeField] private ScrollingBackground background;
-    
-    private float spawnBaseY = -2.5f;
+
+    [SerializeField] private float spawnBaseY = 0f;
     public PlayerController Player { get; private set; }
 
     public void RegisterPlayer(PlayerController player)
@@ -17,8 +17,6 @@ public class GameManager : Singleton<GameManager>
         float camHalfWidth = Camera.main.orthographicSize * Camera.main.aspect;
 
         float spawnX = Camera.main.transform.position.x + camHalfWidth + 2.0f;
-
-        spawnBaseY = -2.5f;
 
         float randomY = Random.Range(-0.2f, 0.2f);
 
