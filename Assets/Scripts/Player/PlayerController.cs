@@ -93,6 +93,10 @@ public class PlayerController : MonoBehaviour
             if (hit.TryGetComponent(out IDamageable enemy))
             {
                 enemy.OnDamage(data.attackDamage, data.knockBackForce);
+
+                //치명타 로직 추가시 수정해야함
+
+                FloatingTextPopUpManager.Instance.Show(data.attackDamage.ToString(), hit.transform, TextType.NormalDamage);
             }
         }
     }
