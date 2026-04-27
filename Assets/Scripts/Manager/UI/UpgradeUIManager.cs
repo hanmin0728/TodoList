@@ -93,6 +93,12 @@ public class UpgradeUIManager : MonoBehaviour
     //Dictionary를 Data 객체로 변환
     private UpgradeData ParseRowToData(Dictionary<string, object> row)
     {
+        string rawValue = "0";
+        if (row.ContainsKey("IsPercentageStat"))
+        {
+            rawValue = row["IsPercentageStat"].ToString();
+        }
+
         return new UpgradeData
         {
             ID = row["ID"].ToString(),
@@ -101,7 +107,8 @@ public class UpgradeUIManager : MonoBehaviour
             IncreasePerLevel = float.Parse(row["IncreasePerLevel"].ToString()),
             BaseCost = double.Parse(row["BaseCost"].ToString()),
             CostMultiplier = float.Parse(row["CostMultiplier"].ToString()),
-            MaxLevel = int.Parse(row["MaxLevel"].ToString())
+            MaxLevel = int.Parse(row["MaxLevel"].ToString()),
+            IsPercentageStat = (rawValue == "1")
         };
     }
 }

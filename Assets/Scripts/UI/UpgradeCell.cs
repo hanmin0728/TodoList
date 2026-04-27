@@ -75,8 +75,19 @@ public class UpgradeCell : MonoBehaviour
         double cost = data.GetCost(level);
 
         levelText.text = (level >= data.MaxLevel) ? "MAX" : level.ToString();
-        statBeforeText.text = CurrencyFormatter.Format(currentValue);
-        statAfterText.text = (level >= data.MaxLevel) ? "" : CurrencyFormatter.Format(nextValue);
+
+        if (data.IsPercentageStat)
+        {
+            statBeforeText.text = currentValue.ToString("F1") + "%";
+            statAfterText.text = (level >= data.MaxLevel) ? "" : nextValue.ToString("F1") + "%";
+        }
+        else
+        {
+            // 기존의 거대 숫자 포맷터 사용
+            statBeforeText.text = CurrencyFormatter.Format(currentValue);
+            statAfterText.text = (level >= data.MaxLevel) ? "" : CurrencyFormatter.Format(nextValue);
+        }
+
         costText.text = (level >= data.MaxLevel) ? "MAX" : CurrencyFormatter.Format(cost);
 
         RefreshVisual(SaveManager.Instance.CurrentData.Gold);
