@@ -4,25 +4,35 @@ using System.Collections.Generic;
 [System.Serializable]
 public class SaveData
 {
-    public long Gold = 0;
+    public double Gold = 0;
 
-    // 능력치 레벨들을 관리할 리스트 
-    public List<StatSaveData> StatLevels = new List<StatSaveData>();
+    // Key: ID, Value: Level
+    public SerializationDictionary<string, int> UpgradeLevels = new SerializationDictionary<string, int>();
 
-}
-
-[System.Serializable]
-public class StatSaveData
-{
-    public string StatID; // CSV의 StatID 
-    public int Level;     // 현재 레벨
-
-    public StatSaveData(string id, int level)
+    public int GetUpgradeLevel(string id) => UpgradeLevels.ContainsKey(id) ? UpgradeLevels[id] : 0;
+    public void SetUpgradeLevel(string id, int level) => UpgradeLevels[id] = level;
+    public SaveData()
     {
-        StatID = id;
-        Level = level;
+        InitDefaultData();
+    }
+    public void InitDefaultData()
+    {
+        // 딕셔너리에 데이터가 없을 때만 기본값 세팅 (중복 방지)
+        if (UpgradeLevels.ToDictionary().Count == 0)
+        { 
+            //csv 파일 id랑 같아야함
+            UpgradeLevels["Atk"] = 1;      // 공격력
+            UpgradeLevels["Hp"] = 1;          // 체력
+            UpgradeLevels["AtkSpeed"] = 1;    // 공격속도
+            UpgradeLevels["CriticalChance"] = 1; // 치명타확률
+            UpgradeLevels["CriticalDamage"] = 1;   // 치명타데미지
+
+            Gold = 100; // 시작 지원금 
+        }
     }
 }
+
+
 
 [System.Serializable]
 public class StageWaveSaveData

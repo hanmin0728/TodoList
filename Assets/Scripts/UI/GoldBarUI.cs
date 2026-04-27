@@ -29,7 +29,7 @@ public class GoldBarUI : MonoBehaviour
     /// <summary>
     /// CurrencyManager OnGoldChanged 액션 실행시 실행
     /// </summary>
-    private void UpdateGoldUI(long currentGold)
+    private void UpdateGoldUI(double currentGold)
     {
         _goldText.text = CurrencyFormatter.Format(currentGold);
     }

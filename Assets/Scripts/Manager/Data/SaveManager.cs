@@ -17,8 +17,6 @@ public class SaveManager : Singleton<SaveManager>
         StartCoroutine(AutoSaveCoroutine());
     }
     
-    
-     
     public void SaveGame()
     {
         string json = JsonUtility.ToJson(CurrentData);
@@ -31,7 +29,7 @@ public class SaveManager : Singleton<SaveManager>
 
     private void Update()
     {
-
+        /// 에디터용
         if (Input.GetKeyDown(KeyCode.O)) // O키를 누르면 폴더가 열림
         {
             EditorUtility.RevealInFinder(Path.Combine(Application.persistentDataPath, _saveFileName));
@@ -59,6 +57,7 @@ public class SaveManager : Singleton<SaveManager>
         }
         else
         {
+            //세이브 파일이 없는 신규 유저
             CurrentData = new SaveData();
         }
     }

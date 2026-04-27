@@ -10,15 +10,9 @@ public class UpgradeData
     public float CostMultiplier;    // 비용 증가 계수
     public int MaxLevel;
 
-    public float GetValueAtLevel(int level)
-    {
-        return BaseValue + (level * IncreasePerLevel);
-    }
-
-    // 💡 현재 레벨을 넣으면 다음 강화 비용을 반환하는 함수 (복리 공식)
-    public long GetCostAtLevel(int level)
-    {
-        // 공식: 시작비용 * (증가계수 ^ 현재레벨)
-        return (long)(BaseCost * Mathf.Pow(CostMultiplier, level));
-    }
+    // 현재 레벨에 따른 능력치 계산
+    public float GetValue(int level) => BaseValue + (level * IncreasePerLevel);
+    
+    // 현재 레벨에 따른 비용 계산
+    public double GetCost(int level) => BaseCost * Mathf.Pow(CostMultiplier, level);
 }

@@ -15,7 +15,7 @@ public class EnemySpawner : Singleton<EnemySpawner>
             Debug.LogError($"EnemyID {id}의 데이터를 찾을 수 없습니다.");
             return;
         }
-
+ 
         GameObject targetPrefab = GetEnemyPrefab(id);
 
         if (targetPrefab == null) 

@@ -1,4 +1,5 @@
 using Mono.Cecil;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,12 +9,28 @@ public class UpgradeCell : MonoBehaviour
     public Image iconImage;
     public TextMeshProUGUI nameText;
     public TextMeshProUGUI levelText;
-    public TextMeshProUGUI statText;
+    public TextMeshProUGUI statBeforeText;
+    public TextMeshProUGUI statAfterText;
     public TextMeshProUGUI costText;
-    public Button upgradeButton;
+    public TextMeshProUGUI upgradeText;
+
+    public Sprite normalSprite; 
+    public Sprite lockedSprite;
+
+    private Color normalTextColor = Color.white;
+    private Color lockedTextColor = Color.red;
+
+    public Image buttonImage;
+    public LongClickButton longClickButton;
 
     private UpgradeData data;
-    private int currentLevel = 0;
+
+
+    private int CurrentLevel
+    {
+        get => SaveManager.Instance.CurrentData.GetUpgradeLevel(data.ID);
+        set => SaveManager.Instance.CurrentData.SetUpgradeLevel(data.ID, value);
+    }
 
     /// <summary>
     /// 매니저가 이 셀을 생성할 때 한 번만 호출하는 세팅 함수
@@ -23,37 +40,63 @@ public class UpgradeCell : MonoBehaviour
         data = upgradeData;
 
         if (iconImage != null)
-        {
             iconImage.sprite = icon;
-        }
+
+        longClickButton.onLongClick = null;
+        longClickButton.onLongClick += OnUpgradeClick;
+
+        CurrencyManager.Instance.OnGoldChanged += RefreshVisual;
 
         UpdateUI();
     }
 
     public void OnUpgradeClick()
     {
-        if (currentLevel < data.MaxLevel)
+        if (CurrentLevel >= data.MaxLevel) return;
+
+        double cost = data.GetCost(CurrentLevel);
+      
+        if (CurrencyManager.Instance.TryUpgrade(cost))
         {
-            currentLevel++;
+            CurrentLevel++;
             UpdateUI();
-            // 재화 차감 및 실제 능력치 반영 로직 추가
+            longClickButton.SetChanged();
         }
+        
     }
 
     public void UpdateUI()
     {
         nameText.text = data.Name;
 
-        float currentValue = data.BaseValue + (currentLevel * data.IncreasePerLevel);
-        float nextValue = data.BaseValue + ((currentLevel + 1) * data.IncreasePerLevel);
-        double currentCost = data.BaseCost * Mathf.Pow(data.CostMultiplier, currentLevel);
+        int level = CurrentLevel;
+        float currentValue = data.GetValue(level);
+        float nextValue = data.GetValue(level + 1);
+        double cost = data.GetCost(level);
 
-        statText.text = $"{currentValue} > <color=#FF0000>{nextValue}</color>";
+        levelText.text = (level >= data.MaxLevel) ? "MAX" : level.ToString();
+        statBeforeText.text = CurrencyFormatter.Format(currentValue);
+        statAfterText.text = (level >= data.MaxLevel) ? "" : CurrencyFormatter.Format(nextValue);
+        costText.text = (level >= data.MaxLevel) ? "MAX" : CurrencyFormatter.Format(cost);
 
-        if (currentLevel >= data.MaxLevel)
-            costText.text = "MAX";
-        else
-            costText.text = CurrencyFormatter.Format(currentCost); 
+        RefreshVisual(SaveManager.Instance.CurrentData.Gold);
+    }
+
+    private void RefreshVisual(double currentGold)
+    {
+        bool isMax = CurrentLevel >= data.MaxLevel;
+        bool canAfford = currentGold >= data.GetCost(CurrentLevel) && !isMax;
+
+        buttonImage.sprite = canAfford ? normalSprite : lockedSprite;
+        upgradeText.color = canAfford ? normalTextColor : lockedTextColor;
+        costText.color = canAfford ? normalTextColor : lockedTextColor;
+    }
+
+    private void OnDestroy()
+    {
+        // 메모리 누수 방지 (구독 해제)
+        if (CurrencyManager.Instance != null)
+            CurrencyManager.Instance.OnGoldChanged -= RefreshVisual;
     }
 
 }
