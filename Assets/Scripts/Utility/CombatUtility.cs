@@ -5,15 +5,23 @@ public static class CombatUtility
     /// <summary>
     /// 치명타 확률을 계산하여 최종 데미지와 치명타 여부를 반환합니다.
     /// </summary>
+    /// <param name="baseDamage">기본 데미지</param>
+    /// <param name="criticalChance">치명타 확률 (1 ~ 100)</param>
     /// <returns> (최종 데미지, 치명타 여부) </returns>
-    public static (float damage, bool isCritical) CalculateDamage(float baseDamage, float critChance, float critMultiplier)
+    public static (float damage, bool isCritical) CalculateDamage(float baseDamage, float criticalChance)
     {
-        // Random.value는 0.0 ~ 1.0 사이의 값을 반환합니다.
-        bool isCritical = Random.value <= critChance;
+        bool isCritical = Random.Range(0f, 100f) <= criticalChance;
 
-        // 치명타라면 배율을 곱하고, 아니면 기본 데미지 반환
-        float finalDamage = isCritical ? baseDamage * critMultiplier : baseDamage;
+        if (isCritical)
+        {
+            float finalMultiplier = 2f;
+            float finalDamage = baseDamage * finalMultiplier;
 
-        return (finalDamage, isCritical);
+            return (finalDamage, true);
+        }
+        else
+        {
+            return (baseDamage, false);
+        }
     }
 }

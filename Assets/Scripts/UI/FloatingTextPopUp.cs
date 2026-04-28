@@ -36,7 +36,11 @@ public class FloatingTextPopUp : MonoBehaviour
                 seq.Append(transform.DOScale(0.006f, 0.006f).SetEase(Ease.OutBack));
                 seq.Join(transform.DOLocalMoveY(transform.position.y + 0.25f, 0.4f));
                 break;
-
+            case TextType.CriticalDamage:
+                text.color = Color.red;
+                seq.Append(transform.DOScale(0.006f, 0.006f).SetEase(Ease.OutBack));
+                seq.Join(transform.DOLocalMoveY(transform.position.y + 0.25f, 0.4f));
+                break;
             case TextType.GoldDrop:
                 break;
         }

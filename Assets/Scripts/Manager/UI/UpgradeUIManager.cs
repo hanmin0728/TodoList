@@ -16,18 +16,16 @@ public class UpgradeUIManager : MonoBehaviour
     [SerializeField] private List<UpgradeIconMapping> iconMappings = new List<UpgradeIconMapping>();
 
     private List<UpgradeCell> _activeCells = new List<UpgradeCell>();
-    private bool _isInitialized = false;
 
     void Start()
     {
-        if (CSVManager.Instance.IsInitialized)
+        if (UpgradeManager.Instance.IsInitialized)
         {
             InitializeUI();
         }
         else
         {
-            // 아직 로딩 중이라면 완료 이벤트에 등록
-            CSVManager.Instance.OnLoadingComplete += InitializeUI;
+            UpgradeManager.Instance.OnUpgradeDataLoaded += InitializeUI;
         }
     }
 
@@ -36,31 +34,24 @@ public class UpgradeUIManager : MonoBehaviour
     /// </summary>
     private void InitializeUI()
     {
-        CSVManager.Instance.OnLoadingComplete -= InitializeUI;
+        UpgradeManager.Instance.OnUpgradeDataLoaded -= InitializeUI;
 
-        if (_isInitialized) return;
+        var allUpgrades = UpgradeManager.Instance.UpgradeDictionary.Values;
 
-        var table = CSVManager.Instance.GetTable("UpgradeTable");
-        foreach (var row in table)
+        foreach (var data in allUpgrades)
         {
             GameObject obj = Instantiate(upgradeCell, contentParent);
             var itemScript = obj.GetComponent<UpgradeCell>();
-
-            // 데이터 파싱 및 초기 셋업
-            UpgradeData data = ParseRowToData(row);
 
             Sprite matchedIcon = GetIconByID(data.ID);
             itemScript.Setup(data, matchedIcon);
 
             _activeCells.Add(itemScript);
         }
-
-        _isInitialized = true;
     }
 
     private void OnEnable()
     {
-        if (!_isInitialized) return;
         RefreshAllCells();
     }
 
@@ -69,7 +60,6 @@ public class UpgradeUIManager : MonoBehaviour
         // 새로 생성하는 게 아니라, 이미 있는 셀들의 텍스트만 갱신
         foreach (var cell in _activeCells)
         {
-            // UpdateUI()는 내부 데이터(레벨 등)를 기반으로 텍스트만 다시 그리는 함수
             cell.UpdateUI();
         }
     }
@@ -90,25 +80,5 @@ public class UpgradeUIManager : MonoBehaviour
         return null; 
     }
 
-    //Dictionary를 Data 객체로 변환
-    private UpgradeData ParseRowToData(Dictionary<string, object> row)
-    {
-        string rawValue = "0";
-        if (row.ContainsKey("IsPercentageStat"))
-        {
-            rawValue = row["IsPercentageStat"].ToString();
-        }
 
-        return new UpgradeData
-        {
-            ID = row["ID"].ToString(),
-            Name = row["Name"].ToString(),
-            BaseValue = float.Parse(row["BaseValue"].ToString()),
-            IncreasePerLevel = float.Parse(row["IncreasePerLevel"].ToString()),
-            BaseCost = double.Parse(row["BaseCost"].ToString()),
-            CostMultiplier = float.Parse(row["CostMultiplier"].ToString()),
-            MaxLevel = int.Parse(row["MaxLevel"].ToString()),
-            IsPercentageStat = (rawValue == "1")
-        };
-    }
 }
