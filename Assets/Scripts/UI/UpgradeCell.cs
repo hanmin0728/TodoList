@@ -90,7 +90,7 @@ public class UpgradeCell : MonoBehaviour
 
         costText.text = (level >= data.MaxLevel) ? "MAX" : CurrencyFormatter.Format(cost);
 
-        RefreshVisual(SaveManager.Instance.CurrentData.Gold);
+        RefreshVisual(SaveManager.Instance.CurrentData.GetGold());
     }
 
     private void RefreshVisual(double currentGold)

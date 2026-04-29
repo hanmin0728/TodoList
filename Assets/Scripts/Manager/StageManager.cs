@@ -1,89 +1,136 @@
+ï»¿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+
 
 public class StageManager : Singleton<StageManager>
 {
-    [Header("ÁøÇà »óÅÂ")]
-    public int _currentStageID = 101;
-    public int _currentWaveIndex = 1;
+    [Header("ì§„í–‰ ìƒíƒœ")]
+    private int currentStageID = 101;
+    private int currentWaveIndex = 1;
+    public int GetCurrentStageID() => currentStageID;
+    public int GetCurrentWaveIndex() => currentWaveIndex;
 
-    [Header("¼³Á¤")]
-    [SerializeField] private float _delayBetweenWaves = 300.0f; // ¼ÒÈ¯ ¿Ï·á ÈÄ ´ÙÀ½ ¿şÀÌºê±îÁö ´ë±â ½Ã°£
-    private bool _isWaveActive = false;
+    private bool isWaveActive = false;
 
+    private Dictionary<string, StageData> stageDataDic = new Dictionary<string, StageData>();
+
+    [Header("ì‹œê°„ ì„¤ì •")]
+    [SerializeField] private float normalWaveDelay = 1.5f; // ì¼ë°˜ ì›¨ì´ë¸Œ ê°„ ëŒ€ê¸° ì‹œê°„
+    [SerializeField] private float bossClearDelay = 3.0f;  // ë³´ìŠ¤ í´ë¦¬ì–´ í›„ ëŒ€ê¸° ì‹œê°„
+
+    public event Action<int, int> OnWaveChanged;
     void Start()
     {
-        // CSV ·Îµù ¿Ï·á ÈÄ Ã¹ ½ºÅ×ÀÌÁö ½ÃÀÛ
         if (CSVManager.Instance.IsInitialized)
         {
-            StartWave(_currentStageID, _currentWaveIndex);
+            InitStageData();
         }
         else
         {
-            CSVManager.Instance.OnLoadingComplete += () => StartWave(_currentStageID, _currentWaveIndex);
+            CSVManager.Instance.OnLoadingComplete += InitStageData;
         }
     }
 
-    // ÁøÀÔÁ¡ ÇÔ¼ö: ¿ÜºÎ³ª ³»ºÎ¿¡¼­ ½ºÅ×ÀÌÁö ½ÃÀÛÀ» ¸í·ÉÇÒ ¶§ »ç¿ë
+    private void InitStageData()
+    {
+        CSVManager.Instance.OnLoadingComplete -= InitStageData;
+        stageDataDic.Clear();
+
+        var table = CSVManager.Instance.GetTable("StageTable");
+        foreach (var row in table)
+        {
+            StageData data = new StageData
+            {
+                StageID = int.Parse(row["StageID"].ToString()),
+                WaveIndex = int.Parse(row["WaveIndex"].ToString()),
+                EnemyID = int.Parse(row["EnemyID"].ToString()),
+                EnemyCount = int.Parse(row["EnemyCount"].ToString())
+            };
+
+            string key = $"{data.StageID}_{data.WaveIndex}";
+            if (!stageDataDic.ContainsKey(key))
+            {
+                stageDataDic.Add(key, data);
+            }
+        }
+        
+        Debug.Log($"<color=green>ìŠ¤í…Œì´ì§€ ë°ì´í„° {stageDataDic.Count}ê°œ ë¡œë“œ ì™„ë£Œ!</color>");
+
+        if (SaveManager.Instance != null && SaveManager.Instance.CurrentData != null)
+        {
+            currentStageID = SaveManager.Instance.CurrentData.GetStageID();
+            currentWaveIndex = SaveManager.Instance.CurrentData.GetWaveIndex();
+        }
+
+        StartWave(currentStageID, currentWaveIndex);
+    }
     public void StartWave(int stageID, int waveIndex)
     {
-        if (_isWaveActive) return;
-        LoadAndStartWave(stageID, waveIndex);
-    }
+        if (isWaveActive) return;
 
-    private void LoadAndStartWave(int stageID, int waveIndex)
-    {
-        var table = CSVManager.Instance.GetTable("StageTable");
-        var row = table.Find(r =>
-            r["StageID"].ToString() == stageID.ToString() &&
-            r["WaveIndex"].ToString() == waveIndex.ToString());
+        string key = $"{stageID}_{waveIndex}";
 
-        if (row == null)
+        if (stageDataDic.TryGetValue(key, out StageData currentWaveData))
         {
-            Debug.Log("<color=yellow>¸ğµç ½ºÅ×ÀÌÁö µ¥ÀÌÅÍ°¡ ³¡³µ½À´Ï´Ù.</color>");
-            return;
+            StartCoroutine(WaveRoutine(currentWaveData));
+            OnWaveChanged?.Invoke(stageID, waveIndex);
         }
-
-        // StageData °´Ã¼ »ı¼º ¹× µ¥ÀÌÅÍ ÁÖÀÔ
-        StageData currentWaveData = new StageData();
-        currentWaveData.StageID = int.Parse(row["StageID"].ToString());
-        currentWaveData.waveIndex = int.Parse(row["WaveIndex"].ToString());
-        currentWaveData.enemyID = int.Parse(row["EnemyID"].ToString());
-        currentWaveData.enemyCount = int.Parse(row["EnemyCount"].ToString());
-
-        StartCoroutine(WaveRoutine(currentWaveData));
+        else
+        {
+            Debug.Log("<color=yellow>ëª¨ë“  ìŠ¤í…Œì´ì§€ë¥¼ í´ë¦¬ì–´í–ˆìŠµë‹ˆë‹¤!</color>");
+        }
     }
-
     private IEnumerator WaveRoutine(StageData data)
     {
-        _isWaveActive = true;
-        //Debug.Log($"<color=cyan>¿şÀÌºê ½ÃÀÛ:</color> Stage {data.StageID} - Wave {data.waveIndex}");
+        isWaveActive = true;
 
-        for (int i = 0; i < data.enemyCount; i++)
+        if (data.IsBossWave)
         {
-            EnemySpawner.Instance.SpawnEnemy(data.enemyID);
-            yield return new WaitForSeconds(0.8f);
+            Debug.Log($"<color=red>âš ï¸ ë³´ìŠ¤ ë“±ì¥! Stage {data.StageID} - Boss Wave âš ï¸</color>");
+        }
+        else
+        {
         }
 
-        //Debug.Log("<color=white>¼ÒÈ¯ ¿Ï·á! Àá½Ã ÈÄ ´ÙÀ½ ¿şÀÌºê·Î ³Ñ¾î°©´Ï´Ù.</color>");
+        // ëª¬ìŠ¤í„° ì†Œí™˜
+        for (int i = 0; i < data.EnemyCount; i++)
+        {
+            EnemySpawner.Instance.SpawnEnemy(data.EnemyID);
+            yield return new WaitForSeconds(0.2f); // ì†Œí™˜ ê°„ê²©
+        }
 
-        yield return new WaitForSeconds(_delayBetweenWaves);
+        yield return new WaitUntil(() => EnemySpawner.Instance.GetActiveEnemyCount() == 0);
 
-        _isWaveActive = false;
+        if (data.IsBossWave)
+        {
+            yield return new WaitForSeconds(bossClearDelay);
+        }
+        else
+        {
+            yield return new WaitForSeconds(normalWaveDelay);
+        }
+
+        isWaveActive = false;
         NextWave();
     }
 
     private void NextWave()
     {
-        _currentWaveIndex++;
+        currentWaveIndex++;
 
-        if (_currentWaveIndex > 4) // 4¿şÀÌºê ±ÔÄ¢
+        // 4ì›¨ì´ë¸Œ(ë³´ìŠ¤)ê¹Œì§€ ê¹¼ë‹¤ë©´ ë‹¤ìŒ ìŠ¤í…Œì´ì§€ë¡œ!
+        if (currentWaveIndex > 4)
         {
-            _currentWaveIndex = 1;
-            _currentStageID++;
-            Debug.Log($"<color=green>½ºÅ×ÀÌÁö Å¬¸®¾î! ´ÙÀ½ ½ºÅ×ÀÌÁö: {_currentStageID}</color>");
+            currentWaveIndex = 1;
+            currentStageID++;
+            Debug.Log($"<color=green>ìŠ¤í…Œì´ì§€ í´ë¦¬ì–´! ë‹¤ìŒ ìŠ¤í…Œì´ì§€: {currentStageID}</color>");
         }
 
-        StartWave(_currentStageID, _currentWaveIndex);
+        SaveManager.Instance.CurrentData.SetStageProgress(currentStageID, currentWaveIndex);
+        SaveManager.Instance.SaveGame(); 
+
+        StartWave(currentStageID, currentWaveIndex);
     }
 }

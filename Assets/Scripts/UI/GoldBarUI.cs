@@ -36,6 +36,6 @@ public class GoldBarUI : MonoBehaviour
 
     private void UpdateUI()
     {
-        UpdateGoldUI(SaveManager.Instance.CurrentData.Gold);
+        UpdateGoldUI(SaveManager.Instance.CurrentData.GetGold());
     }
 }

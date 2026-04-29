@@ -54,6 +54,10 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
         data = newData;
         currentHp = data.hp; // 최대 체력 정보를 가져와 현재 체력 초기화
         IsAttackAnimationFinished = false;
+
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null) col.enabled = true;
+
         StateMachine.Initialize(ChaseState);
     }
 
@@ -87,7 +91,11 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     public void Die()
     {
         IsDead = true;
+        
         CurrencyManager.Instance.AddGold(data.goldReward);
+        EnemySpawner.Instance.OnEnemyDeath();
+
+
         StateMachine.ChangeState(DieState); // 죽음 상태로 전환 
     }
 

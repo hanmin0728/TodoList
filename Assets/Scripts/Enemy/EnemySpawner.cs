@@ -3,9 +3,11 @@ using UnityEngine;
 
 public class EnemySpawner : Singleton<EnemySpawner>
 {
-    // 성능 최적화를 위한 프리팹 캐싱 (한 번 불러온 프리팹은 기억해 둠)
+    // 성능 최적화를 위한 프리팹 캐싱 
     private Dictionary<int, GameObject> prefabCache = new Dictionary<int, GameObject>();
-
+    
+    public int activeEnemyCount = 0;
+    
     public void SpawnEnemy(int id)
     {
         var row = CSVManager.Instance.GetDataById("EnemyTable", "EnemyID", id.ToString());
@@ -35,8 +37,10 @@ public class EnemySpawner : Singleton<EnemySpawner>
         Vector2 spawnPos = GameManager.Instance.GetSpawnPosition();
         GameObject obj = PoolManager.Instance.Spawn(targetPrefab, spawnPos, Quaternion.identity);
         obj.GetComponent<EnemyBase>().Init(newEnemyData);
-    }
 
+        activeEnemyCount++;
+    }
+  
     /// <summary>
     /// ID를 기반으로 프리팹을 로드하고 캐싱하는 함수
     /// </summary>
@@ -63,5 +67,19 @@ public class EnemySpawner : Singleton<EnemySpawner>
         }
 
         return prefabCache[id];
+    }
+
+    public int GetActiveEnemyCount()
+    {
+        return activeEnemyCount;
+    }
+    public void OnEnemyDeath()
+    {
+        activeEnemyCount--;
+
+        if (activeEnemyCount <= 0)
+        {
+            activeEnemyCount = 0;
+        }
     }
 }

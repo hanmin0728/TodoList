@@ -11,17 +11,24 @@ public class CurrencyManager : Singleton<CurrencyManager>
     /// </summary>
     public void AddGold(long amount)
     {
-        SaveManager.Instance.CurrentData.Gold += amount;
+        double currentGold = SaveManager.Instance.CurrentData.GetGold();
+        double nextGold = currentGold + amount;
+        SaveManager.Instance.CurrentData.SetGold(nextGold);
 
-        OnGoldChanged?.Invoke(SaveManager.Instance.CurrentData.Gold);
+
+        OnGoldChanged?.Invoke(nextGold);
     }
     
     public  bool TryUpgrade(double amount)
     {
-        if (SaveManager.Instance.CurrentData.Gold >= amount)
+        double currentGold = SaveManager.Instance.CurrentData.GetGold();
+
+        if (currentGold >= amount)
         {
-            SaveManager.Instance.CurrentData.Gold -= amount;
-            OnGoldChanged?.Invoke(SaveManager.Instance.CurrentData.Gold);
+            double nextGold = currentGold - amount;
+            SaveManager.Instance.CurrentData.SetGold(nextGold);
+
+            OnGoldChanged?.Invoke(nextGold);
             return true;
         }
         else

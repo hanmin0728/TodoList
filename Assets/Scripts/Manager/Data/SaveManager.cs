@@ -10,10 +10,12 @@ public class SaveManager : Singleton<SaveManager>
     private string _saveFileName = "SaveData.json";
 
     public Action OnDataLoaded; // 로드 완료 알림용 액션
-
-    private void Start()
+    protected override void Awake()
     {
         LoadGame();
+    }
+    private void Start()
+    {
         StartCoroutine(AutoSaveCoroutine());
     }
     
