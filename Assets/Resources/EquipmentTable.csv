@@ -1,0 +1,23 @@
+﻿ID,Name,EquipType,Grade,Tier,EquipStatType_1,EquipStatValue_1,EquipStatType_2,EquipStatValue_2,OwnStatType,OwnStatValue,NextID,NeedCount,IconName
+Weapon_1,초보자의 검,Weapon,Normal,1,Atk,100,None,0,Atk,1.2,Weapon_2,5,BalancedSword
+Weapon_2,브론즈 대거,Weapon,Normal,2,Atk,200,Hp,10,Atk,1.5,Weapon_3,5,BronzeDagger
+Weapon_3,헌터의 검,Weapon,Normal,3,Atk,300,None,11,Atk,1.8,Weapon_4,5,HunterKnife
+Weapon_4,암살자의 단검,Weapon,Normal,4,Atk,400,None,12,Atk,2,Weapon_5,5,AssassinDagger
+Weapon_5,일본식 검,Weapon,Rare,1,Atk,500,None,13,Atk,2.5,Weapon_6,5,Katana
+Weapon_6,날카로운 검,Weapon,Rare,2,Atk,600,None,14,Atk,3,Weapon_7,5,SharpenedInfantrySword
+Weapon_7,고대 괴수 만티코어의 뼈로 만든 검,Weapon,Rare,3,Atk,700,None,15,Atk,3.3,Weapon_8,5,ManticoreSword
+Weapon_8,최고의 늪 전사들에게만 물려져오는 창,Weapon,Rare,4,Atk,800,None,16,Atk,3.6,Weapon_9,5,SwampWarriorSpear
+Weapon_9,기사왕 아서의 검,Weapon,Epic,1,Atk,900,None,17,Atk,3.9,Weapon_10,5,AriostinGreatsword
+Weapon_10,나무를 잘 자르는 검,Weapon,Epic,2,Atk,1000,None,18,Atk,4.2,Weapon_11,5,ButcherKnife
+Weapon_11,산속에 2000년 잠들어있던 명검,Weapon,Epic,3,Atk,1500,None,19,Atk,4.5,Weapon_12,5,MountainSword
+Weapon_12,바이킹 전사의 도끼,Weapon,Epic,4,Atk,2000,None,20,Atk,5,Weapon_13,5,VikingAxe
+Weapon_13,토르의 망치,Weapon,Legend,1,Atk,3000,None,21,Atk,5.5,Weapon_14,3,WarHammer
+Weapon_14,휘두를때 강한 스태프,Weapon,Legend,2,Atk,5000,None,22,Atk,6,Weapon_15,3,HardwoodWand
+Weapon_15,달빛으로 만든 검,Weapon,Legend,3,Atk,10000,None,23,Atk,7,Weapon_16,3,DarkSword
+Weapon_16,도깨비 방망이,Weapon,Legend,4,Atk,100000,None,24,Atk,8,Max,3,WoodenClub
+Ring_1,구리 반지,Ring,Normal,1,Atk,10,None,25,Atk,1.1,Ring_2,5,BronzeRing
+Ring_2,보석이 박힌 구리 반지,Ring,Normal,2,Atk,20,None,26,Atk,1.2,Ring_3,5,MagicBronzeRing
+Ring_3,은 반지,Ring,Rare,1,Atk,30,None,27,Atk,1.3,Ring_4,5,SilverRing
+Ring_4,보석이 박힌 은 반지,Ring,Rare,2,Atk,40,None,28,Atk,1.4,Ring_5,5,MagicSilverRing
+Ring_5,금 반지,Ring,Epic,1,Atk,50,None,29,Atk,1.5,Ring_6,5,GoldenRing
+Ring_6,보석이 박힌 금 반지,Ring,Epic,2,Atk,60,None,30,Atk,1.6,Max,5,MagicGoldenRing

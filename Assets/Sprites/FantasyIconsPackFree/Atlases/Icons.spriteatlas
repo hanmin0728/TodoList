@@ -233,7 +233,7 @@ SpriteAtlas:
   - GladiatorShield
   - SteelAxe
   - MagicGoldenRing
-  - 'BalancedSword [Paint]'
+  - BalancedSword
   - WoodenShield2
   - BattleguardArmor
   - BerserkAxe
@@ -244,7 +244,7 @@ SpriteAtlas:
   - SwampWarriorSpear
   - ManticoreArmor
   - DarkMountain
-  - VikingAxe3
+  - VikingAxe
   - BronzeRing
   - WoodcutterAxe
   - DarkSword
@@ -254,7 +254,7 @@ SpriteAtlas:
   - SliverRing2_0
   - DarkMountain
   - GreyKnight
-  - 'HunterKnife [Paint]'
+  - HunterKnife
   - HunterBow
   - SharpenedInfantrySword
   - ButcherKnife
@@ -265,7 +265,7 @@ SpriteAtlas:
   - VikingShortBow
   - ScoutHelm
   - GoldenRing
-  - 'Katana1 [Paint]'
+  - Katana
   - ManticoreHelmet
   - 'BanditLightArmor [Paint]'
   - GateCrusher
@@ -287,7 +287,7 @@ SpriteAtlas:
   - SteelTowerShield
   - 'BanditLightArmor [Paint]'
   - TwoHandedWoodenMace
-  - 'AssassinDagger [Paint]'
+  - AssassinDagger
   - HawkHelm
   - Cheese
   - BattleguardArmor
@@ -305,7 +305,7 @@ SpriteAtlas:
   - ChickenLeg
   - OldPoleaxe
   - LongHammer
-  - 'MountainSword [Paint]'
+  - MountainSword
   - MagicBronzeRing
   - HandBomb
   m_RenderDataMap: {}
