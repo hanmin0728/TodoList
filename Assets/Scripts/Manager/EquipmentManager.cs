@@ -221,4 +221,25 @@ public class EquipmentManager : Singleton<EquipmentManager>
             OnEquipmentDataChanged?.Invoke(); 
         }
     }
+
+    /// <summary>
+    /// 장비 장착 
+    /// </summary>
+    public void EquipItem(string equipID)
+    {
+        if (!EquipDataDic.TryGetValue(equipID, out var data))
+        {
+            Debug.LogError($"장착 오류: ID {equipID} 데이터가 없습니다.");
+            return;
+        }
+
+        // 장비 타입 key로 사용
+        string typeKey = data.EquipType.ToString();
+        SaveManager.Instance.CurrentData.SetEquippedID(typeKey, equipID);
+        SaveManager.Instance.SaveGame();
+
+        OnEquipmentDataChanged?.Invoke();
+
+        Debug.Log($"[{typeKey}] 슬롯에 {data.Name}({equipID}) 장착 완료!");
+    }
 }

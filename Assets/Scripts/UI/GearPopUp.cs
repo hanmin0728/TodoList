@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class GearPopUp : MonoBehaviour
 {
     [Header("상단 정보")]
-    [SerializeField] private EquipmentSlotUI slot; 
+    [SerializeField] private EquipmentSlotUI slot;
     [SerializeField] private TextMeshProUGUI gearNameText;
     [SerializeField] private TextMeshProUGUI rankText;
     [SerializeField] private Image rankImage;
@@ -15,7 +15,30 @@ public class GearPopUp : MonoBehaviour
     [SerializeField] private Transform equipContent;     // 장착 효과 스크롤뷰의 Content
     [SerializeField] private Transform passiveContent;   // 패시브 효과 스크롤뷰의 Content
 
+
+    [Header("장착 버튼 UI")]
+    [SerializeField] private Button equipButton; // 인스펙터에서 장착 버튼 연결
+    [SerializeField] private TextMeshProUGUI equipButtonText; // "장착" 글자 연결
     private EquipmentData data;
+    private void OnEnable()
+    {
+        EquipmentManager.OnEquipmentDataChanged += RefreshPopupUI;
+    }
+
+    private void OnDisable()
+    {
+        EquipmentManager.OnEquipmentDataChanged -= RefreshPopupUI;
+    }
+    private void RefreshPopupUI()
+    {
+        if (data == null) return;
+
+        slot.UpdateUI();
+
+        RefreshEquipButtonState();
+
+        RefreshStatList(data);
+    }
 
     // 장비 슬롯을 눌렀을 때 호출될 함수
     public void OpenPopup(EquipmentData data)
@@ -29,8 +52,7 @@ public class GearPopUp : MonoBehaviour
 
         rankImage.sprite = EquipmentManager.Instance.gradeData.GetSpriteBackground(data.Grade);
 
-        RefreshStatList(data);
-
+        RefreshPopupUI();
         gameObject.SetActive(true);
     }
 
@@ -83,10 +105,53 @@ public class GearPopUp : MonoBehaviour
 
         if (success)
         {
-            OpenPopup(data); 
+            OpenPopup(data);
         }
         else
         {
+        }
+    }
+
+    public void OnClickEquipButton()
+    {
+        if (data == null) return;
+
+        // 장착 실행
+        EquipmentManager.Instance.EquipItem(data.ID);
+
+        // 장착 후 버튼 표기 다시 새로고침
+        RefreshEquipButtonState();
+    }
+
+    /// <summary>
+    /// 현재 장비가 장착 중인지 확인하여 버튼 텍스트 변경
+    /// </summary>
+    private void RefreshEquipButtonState()
+    {
+        string typeKey = data.EquipType.ToString();
+        string equippedID = SaveManager.Instance.CurrentData.GetEquippedID(typeKey);
+
+        // 1. 현재 보고 있는 장비를 장착 중인지 확인
+        bool isEquipped = (equippedID == data.ID);
+  
+        bool wasAcquired = SaveManager.Instance.CurrentData.IsUnlocked(data.ID);
+
+        if (isEquipped)
+        {
+            equipButtonText.text = "장착 중";
+            equipButton.interactable = false;
+        }
+        else if (!wasAcquired)
+        {
+            // 딕셔너리에 ID가 아예 없으므로 한 번도 얻은 적 없는 상태
+            equipButtonText.text = "미보유";
+            equipButton.interactable = false;
+        }
+        else
+        {
+            // 딕셔너리에 ID가 존재한다면  장착 가능!
+            equipButtonText.text = "장착";
+            equipButton.interactable = true;
         }
     }
 }

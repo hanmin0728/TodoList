@@ -48,7 +48,10 @@ public class SaveData
     [SerializeField] private SerializationDictionary<string, bool> NewItemStatus = new SerializationDictionary<string, bool>();
 
     public bool IsNewItem(string id) => NewItemStatus.ContainsKey(id) ? NewItemStatus[id] : false;
-
+    public bool IsUnlocked(string id)
+    {
+        return NewItemStatus.ContainsKey(id);
+    }
     public void SetNewStatus(string id, bool isNew)
     {
         NewItemStatus[id] = isNew;
@@ -91,11 +94,11 @@ public class SaveData
 
             // 장비 기본 데이터 초기화
             OwnedEquipments["Weapon_1"] = 1;
+            NewItemStatus["Weapon_1"] = true;
 
             // 기본 장착 설정
             EquippedEquipments["Weapon"] = string.Empty;
             EquippedEquipments["Ring"] = string.Empty;
-
         }
     }
 

@@ -13,10 +13,12 @@ public class EquipmentSlotUI : MonoBehaviour
     [SerializeField] private Slider progressFillSlider;      // 보유량 게이지
 
     [SerializeField] private GameObject newBadge; // 새로 얻었을때 n 표시
+    [SerializeField] private GameObject equippedBadge;
 
     public EquipmentData Data { get; private set; }
 
     public static Action<EquipmentData> OnSlotClicked;
+
 
     /// <summary>
     /// 인벤토리 생성 시 최초 1회 설정
@@ -48,6 +50,13 @@ public class EquipmentSlotUI : MonoBehaviour
 
         bool isNew = SaveManager.Instance.CurrentData.IsNewItem(Data.ID);
         newBadge.SetActive(isNew && currentCount > 0);
+
+        string typeKey = Data.EquipType.ToString();
+        string equippedID = SaveManager.Instance.CurrentData.GetEquippedID(typeKey);
+
+        // 현재 슬롯의 ID가 장착된 ID와 일치하는지 확인
+        bool isEquipped = (Data.ID == equippedID);
+        equippedBadge.SetActive(isEquipped);
     }
 
     /// <summary>
