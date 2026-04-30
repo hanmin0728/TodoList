@@ -8,6 +8,10 @@ public class EquipmentManager : Singleton<EquipmentManager>
 
     public event Action OnDataInitialized; 
     public bool IsInitialized { get; private set; } = false;
+    private Dictionary<string, Sprite> iconCache = new Dictionary<string, Sprite>();
+
+    public EquipmentGradeData gradeData;
+
     private void Start()
     {
         if (CSVManager.Instance.IsInitialized)
@@ -75,12 +79,41 @@ public class EquipmentManager : Singleton<EquipmentManager>
             }
         }
         IsInitialized = true;
+        
         OnDataInitialized?.Invoke();
-        Debug.Log($"<color=cyan>[EquipmentManager]</color> 장비 데이터 {EquipDataDic.Count}개 로드 완료!");
+
+        Debug.Log($"장비 데이터 {EquipDataDic.Count}개 로드 완료!");
     }
     public EquipmentData GetEquipData(string id)
     {
         if (EquipDataDic.TryGetValue(id, out var data)) return data;
         return null;
+    }
+
+    public Sprite GetIcon(EquipmentData data)
+    {
+        if (data == null || string.IsNullOrEmpty(data.IconName)) return null;
+
+        if (iconCache.TryGetValue(data.IconName, out Sprite cachedSprite))
+        {
+            Debug.Log("캐싱된거 잘 쓰고있음");
+            return cachedSprite;
+        }
+
+        string folderName = data.EquipType.ToString();
+        string fullPath = $"Icons/Equipment/{folderName}/{data.IconName}";
+
+        Sprite sp = Resources.Load<Sprite>(fullPath);
+
+        if (sp != null)
+        {
+            iconCache.Add(data.IconName, sp);
+        }
+        else
+        {
+            Debug.LogWarning($"아이콘 로드 실패: {fullPath}");
+        }
+
+        return sp;
     }
 }

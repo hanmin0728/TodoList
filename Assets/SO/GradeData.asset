@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c613c81565b7d4e439882c37c74431f0, type: 3}
+  m_Name: GradeData
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentGradeData
+  normal: {fileID: 3854937685773409457, guid: ec8d8c3753330db44ba84e3fe8d52316, type: 3}
+  rare: {fileID: 745470187430117782, guid: 07d14112a551c304e81299bcfa643767, type: 3}
+  epic: {fileID: -2500523307979388095, guid: aac49624437bbd8459330f91b4784df8, type: 3}
+  legend: {fileID: 5891696667252346562, guid: 330927eaad0f2cc47971d8482ec942da, type: 3}

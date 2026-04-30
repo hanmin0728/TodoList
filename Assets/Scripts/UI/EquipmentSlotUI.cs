@@ -10,10 +10,6 @@ public class EquipmentSlotUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI tierText; // 티어 표시 (예: T1, T2)
     [SerializeField] private TextMeshProUGUI countText;// 보유량 텍스트 (예: 5/5)
     [SerializeField] private Image progressFill;      // 보유량 게이지 (Image Type: Filled)
-    
-    
-    
-
 
 
     public EquipmentData Data { get; private set; }
@@ -25,13 +21,17 @@ public class EquipmentSlotUI : MonoBehaviour
     {
         Data = data;
 
-        tierText.text = $"T{data.Tier}";
         SetGradeColor(data.Grade);
+        
+        tierText.text = $"Tier {data.Tier}";
+
+        iconImage.sprite = EquipmentManager.Instance.GetIcon(data);
+
         UpdateUI();
     }
 
     /// <summary>
-    /// 데이터가 변경되었을 때(합성, 소환 등) 호출하여 화면 갱신
+    /// 데이터가 변경되었을 때 화면 갱신
     /// </summary>
     public void UpdateUI()
     {
@@ -49,12 +49,6 @@ public class EquipmentSlotUI : MonoBehaviour
 
     private void SetGradeColor(GradeType grade)
     {
-        switch (grade)
-        {
-            case GradeType.Normal: rankBGImage.color = Color.gray; break;
-            case GradeType.Rare: rankBGImage.color = Color.blue; break;
-            case GradeType.Epic: rankBGImage.color = Color.magenta; break;
-            case GradeType.Legend: rankBGImage.color = new Color(1f, 0.5f, 0f); break; // 주황색
-        }
+        rankBGImage.sprite = EquipmentManager.Instance.gradeData.GetSprite(grade);
     }
 }

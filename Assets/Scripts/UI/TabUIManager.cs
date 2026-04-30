@@ -16,12 +16,8 @@ public class TabUIManager : MonoBehaviour
         for (int i = 0; i < tabPanels.Length; i++)
         {
             if (tabPanels[i] == null) continue;
-
-            // 내가 누른 인덱스와 같으면 true(켜기), 다르면 false(끄기)
             tabPanels[i].SetActive(i == index);
         }
-
-        Debug.Log($"<color=yellow>[TabSystem]</color> {index}번 패널 활성화 완료");
     }
 
 }
