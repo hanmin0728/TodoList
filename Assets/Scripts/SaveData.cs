@@ -44,6 +44,16 @@ public class SaveData
     // Key: 장비 타입(Weapon, Ring 등), Value: 장착 중인 장비 ID
     [SerializeField] private SerializationDictionary<string, string> EquippedEquipments = new SerializationDictionary<string, string>();
 
+    // Key: ID, Value: 새로운 아이템인지 여부
+    [SerializeField] private SerializationDictionary<string, bool> NewItemStatus = new SerializationDictionary<string, bool>();
+
+    public bool IsNewItem(string id) => NewItemStatus.ContainsKey(id) ? NewItemStatus[id] : false;
+
+    public void SetNewStatus(string id, bool isNew)
+    {
+        NewItemStatus[id] = isNew;
+    }
+
     public int GetEquipCount(string id) => OwnedEquipments.ContainsKey(id) ? OwnedEquipments[id] : 0;
     public void AddEquipCount(string id, int count)
     {

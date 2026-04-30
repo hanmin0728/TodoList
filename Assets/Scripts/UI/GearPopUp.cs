@@ -87,7 +87,6 @@ public class GearPopUp : MonoBehaviour
         }
         else
         {
-            // "재료가 부족합니다" 같은 알림 띄우기
         }
     }
 }

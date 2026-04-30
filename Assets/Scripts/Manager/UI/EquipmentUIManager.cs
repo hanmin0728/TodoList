@@ -114,7 +114,7 @@ public class EquipmentUIManager : MonoBehaviour
         ScrollRect sr = scrollViewObj.GetComponent<ScrollRect>();
         if (sr != null)
         {
-            sr.verticalNormalizedPosition = 1f; // 1.0f가 맨 위, 0.0f가 맨 아래입니다.
+            sr.verticalNormalizedPosition = 1f; // 맨위로
         }
     }
 }

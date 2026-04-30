@@ -8,9 +8,11 @@ public class EquipmentSlotUI : MonoBehaviour
     [Header("UI 연결")]
     [SerializeField] private Image iconImage;          // 장비 아이콘
     [SerializeField] private Image rankBGImage;       // 등급별 배경 색상
-    [SerializeField] private TextMeshProUGUI tierText; // 티어 표시 (예: T1, T2)
-    [SerializeField] private TextMeshProUGUI countText;// 보유량 텍스트 (예: 5/5)
-    [SerializeField] private Slider progressFillSlider;      // 보유량 게이지 (Image Type: Filled)
+    [SerializeField] private TextMeshProUGUI tierText; // 티어 표시 
+    [SerializeField] private TextMeshProUGUI countText;// 보유량 텍스트
+    [SerializeField] private Slider progressFillSlider;      // 보유량 게이지
+
+    [SerializeField] private GameObject newBadge; // 새로 얻었을때 n 표시
 
     public EquipmentData Data { get; private set; }
 
@@ -41,11 +43,11 @@ public class EquipmentSlotUI : MonoBehaviour
         int currentCount = SaveManager.Instance.CurrentData.GetEquipCount(Data.ID);
         int needCount = Data.NeedCount;
 
-        Debug.Log(Data.ID +" s    "  +  currentCount);
-
-
         countText.text = $"{currentCount}/{needCount}";
         progressFillSlider.value = (float)currentCount / Mathf.Max(1, needCount);
+
+        bool isNew = SaveManager.Instance.CurrentData.IsNewItem(Data.ID);
+        newBadge.SetActive(isNew && currentCount > 0);
     }
 
     /// <summary>
@@ -54,6 +56,13 @@ public class EquipmentSlotUI : MonoBehaviour
     public void OnClickSlot()
     {
         if (Data == null) return;
+
+        if (SaveManager.Instance.CurrentData.IsNewItem(Data.ID))
+        {
+            SaveManager.Instance.CurrentData.SetNewStatus(Data.ID, false);
+            SaveManager.Instance.SaveGame(); 
+            UpdateUI(); 
+        }
 
         OnSlotClicked?.Invoke(Data);
     }

@@ -126,34 +126,99 @@ public class EquipmentManager : Singleton<EquipmentManager>
             return false;
         }
 
-        // 2. 다음 등급 장비가 있는지 확인
-        if (string.IsNullOrEmpty(currentData.NextID) || currentData.NextID == "Max")
+        // 다음 등급 장비가 있는지 확인
+        string nextID = currentData.NextID;
+        if (string.IsNullOrEmpty(nextID) || nextID == "Max")
         {
             Debug.LogWarning("최고 등급 장비이거나 다음 장비 데이터가 없습니다.");
             return false;
         }
 
-        int currentOwnedCount = SaveManager.Instance.CurrentData.GetEquipCount(currentID);
+        int initialOwnedCount = SaveManager.Instance.CurrentData.GetEquipCount(currentID);
         int needCount = currentData.NeedCount;
 
-        if (currentOwnedCount < needCount)
+        if (initialOwnedCount < needCount)
         {
-            Debug.LogWarning($"재료 부족: {currentOwnedCount} / {needCount}");
+            Debug.LogWarning($"재료 부족: {initialOwnedCount} / {needCount}");
             return false;
         }
+        
+        int currentOwnedCount = initialOwnedCount;
+        int synthesesPerformed = 0;
 
-        //재료 차감 (0개가 되어도 삭제하지 않고 수치만 0으로 세팅)
-        int remainingCount = currentOwnedCount - needCount;
-        SaveManager.Instance.CurrentData.SetEquipCount(currentID, remainingCount);
+        while (currentOwnedCount >= needCount)
+        {
+            currentOwnedCount -= needCount;
+            SaveManager.Instance.CurrentData.SetEquipCount(currentID, currentOwnedCount);
 
-        // 다음 id 장비 추가
-        SaveManager.Instance.CurrentData.AddEquipCount(currentData.NextID, 1);
+            if (SaveManager.Instance.CurrentData.GetEquipCount(nextID) == 0)
+            {
+                SaveManager.Instance.CurrentData.SetNewStatus(nextID, true);
+            }
 
-        //데이터 저장 
-        SaveManager.Instance.SaveGame();
-        OnEquipmentDataChanged?.Invoke();
-        Debug.Log($"{currentData.Name} {needCount}개 소모 -> {currentData.NextID} 획득 성공!");
+            SaveManager.Instance.CurrentData.AddEquipCount(nextID, 1);
+
+            synthesesPerformed++;
+        }
+
+        if (synthesesPerformed > 0)
+        {
+            SaveManager.Instance.SaveGame();
+
+            OnEquipmentDataChanged?.Invoke();
+
+            Debug.Log($"{currentData.Name} {synthesesPerformed * needCount}개 소모 -> {nextID} 장비 {synthesesPerformed}개 획득 성공!");
+        }
         return true;
     }
 
+    public bool CanSynthesizeAny()
+    {
+        foreach (var data in EquipDataDic.Values)
+        {
+            if (string.IsNullOrEmpty(data.NextID) || data.NextID == "Max") continue;
+
+            // 하나라도 필요 개수보다 많이 가지고 있다면 true
+            if (SaveManager.Instance.CurrentData.GetEquipCount(data.ID) >= data.NeedCount)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void SynthesizeAll()
+    {
+        bool isAnySynthesized = false;
+
+        // 모든 장비 데이터를 돌면서 체크
+        foreach (var data in EquipDataDic.Values)
+        {
+            // 5개 이상일 때만 반복해서 합성 (재료가 부족할 때까지)
+            while (SaveManager.Instance.CurrentData.GetEquipCount(data.ID) >= data.NeedCount)
+            {
+                if (string.IsNullOrEmpty(data.NextID) || data.NextID == "Max") break;
+
+                // 로직 실행 (재료 차감 -> 결과 추가)
+                int currentCount = SaveManager.Instance.CurrentData.GetEquipCount(data.ID);
+                string nextID = data.NextID;
+                SaveManager.Instance.CurrentData.SetEquipCount(data.ID, currentCount - data.NeedCount);
+
+                if (SaveManager.Instance.CurrentData.GetEquipCount(nextID) == 0)
+                {
+                    SaveManager.Instance.CurrentData.SetNewStatus(nextID, true);
+                }
+
+                SaveManager.Instance.CurrentData.AddEquipCount(data.NextID, 1);
+
+                isAnySynthesized = true;
+            }
+        }
+
+        if (isAnySynthesized)
+        {
+            SaveManager.Instance.SaveGame();
+            OnEquipmentDataChanged?.Invoke(); 
+        }
+    }
 }
