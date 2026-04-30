@@ -2797,17 +2797,6 @@ MonoBehaviour:
       - CriticalChance
       - CriticalDamage
       values: 0100000001000000010000000100000001000000
-    OwnedEquipments:
-      keys:
-      - Weapon_1
-      values: 01000000
-    EquippedEquipments:
-      keys:
-      - Weapon
-      - Ring
-      values:
-      - 
-      - 
 --- !u!1 &490031919
 GameObject:
   m_ObjectHideFlags: 0
@@ -14122,14 +14111,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4953179927419749255}
+  m_Children: []
   m_Father: {fileID: 6352744980745647439}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 260.54, y: 38.5588}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1857922567718849317
 MonoBehaviour:
@@ -14145,7 +14133,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.18823531, g: 0.81568635, b: 0.8078432, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -14183,8 +14171,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 3/5
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: a61f233210acfb947bce80f2a02001b2, type: 2}
-  m_sharedMaterial: {fileID: 6670887616090037755, guid: a61f233210acfb947bce80f2a02001b2, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1133ad8bc57ce9845b47c785c185d739, type: 2}
+  m_sharedMaterial: {fileID: -439962119302247251, guid: 1133ad8bc57ce9845b47c785c185d739, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -14208,15 +14196,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 35
-  m_fontSizeBase: 35
+  m_fontSize: 37
+  m_fontSizeBase: 27
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 37
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -14961,9 +14949,9 @@ MonoBehaviour:
   gearNameText: {fileID: 4818936591155897948}
   rankText: {fileID: 3550590477967527864}
   rankImage: {fileID: 5078035202825450093}
-  statRowPrefab: {fileID: 3956519682087453609, guid: 6cf48f1ef7262e8469d97be3e15c32bd, type: 3}
-  equipContent: {fileID: 125280850}
-  passiveContent: {fileID: 252503725}
+  statRowPrefab: {fileID: 0}
+  equipContent: {fileID: 0}
+  passiveContent: {fileID: 0}
 --- !u!114 &3288118835956702636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15584,19 +15572,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3815918639300576799}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 3235833713449913882}
-        m_TargetAssemblyTypeName: GearPopUp, Assembly-CSharp
-        m_MethodName: OnClickSynthesisButton
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1001 &4167822861421027505
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15911,6 +15887,26 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!224 &4367160499250283681
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9079115226044592247}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4953179927419749255}
+  m_Father: {fileID: 6352744980745647439}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0.25}
+  m_AnchorMax: {x: 1, y: 0.75}
+  m_AnchoredPosition: {x: 0.000061035156, y: 0.000030517578}
+  m_SizeDelta: {x: 0, y: 16.883}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &4478454239828982202
 GameObject:
   m_ObjectHideFlags: 0
@@ -16289,12 +16285,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1658433822587025077}
+  m_Father: {fileID: 4367160499250283681}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.54, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.6, y: 1}
+  m_AnchoredPosition: {x: 0, y: -0.00008392334}
+  m_SizeDelta: {x: 0, y: -0.000053406}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4981573624033081902
 MonoBehaviour:
@@ -16906,7 +16902,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -17085,8 +17081,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 5.1, y: -0.8}
+  m_SizeDelta: {x: 55.44, y: 45.11}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &6069607917742552848
 GameObject:
@@ -17253,13 +17249,14 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1658433822587025077}
+  - {fileID: 4367160499250283681}
   - {fileID: 6053021047145046095}
   m_Father: {fileID: 5947146250569708345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -175}
-  m_SizeDelta: {x: 260, y: 45}
+  m_AnchoredPosition: {x: 2.3010406, y: -175.97424}
+  m_SizeDelta: {x: 260.54004, y: 43.35251}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &6364333362301367824
 GameObject:
@@ -17610,6 +17607,7 @@ GameObject:
   - component: {fileID: 6053021047145046095}
   - component: {fileID: 7692461341957517447}
   - component: {fileID: 1892011300291686916}
+  - component: {fileID: 8522251827833321470}
   m_Layer: 5
   m_Name: Text_Content
   m_TagString: Untagged
@@ -18237,6 +18235,20 @@ RectTransform:
   m_AnchoredPosition: {x: 59.1, y: 0.18000412}
   m_SizeDelta: {x: 101.11, y: 41.91}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &8522251827833321470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991379681482696020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 2
+  m_VerticalFit: 2
 --- !u!114 &8544769653821990308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18417,7 +18429,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.54
+  m_Value: 0.6
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -18477,6 +18489,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2519665976827729509}
   m_CullTransparentMesh: 1
+--- !u!1 &9079115226044592247
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4367160499250283681}
+  m_Layer: 5
+  m_Name: ProgressBar_Fill_Area
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!224 &9088593572289353985
 RectTransform:
   m_ObjectHideFlags: 0
@@ -18538,8 +18566,9 @@ MonoBehaviour:
   iconImage: {fileID: 7228221691332909476}
   rankBGImage: {fileID: 1020424501162620287}
   tierText: {fileID: 4647789454914363171}
-  countText: {fileID: 1892011300291686916}
-  progressFillSlider: {fileID: 8974802272666847689}
+  countText: {fileID: 0}
+  progressFill: {fileID: 0}
+  slotBtn: {fileID: 0}
 --- !u!114 &9220362193837165892
 MonoBehaviour:
   m_ObjectHideFlags: 0

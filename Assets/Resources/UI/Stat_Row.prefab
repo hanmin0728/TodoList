@@ -313,6 +313,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8828801813472234433}
+  - component: {fileID: 4717751482830367716}
   m_Layer: 5
   m_Name: Stat_Row
   m_TagString: Untagged
@@ -343,6 +344,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 800, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &4717751482830367716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3956519682087453609}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 994832b7fb94dfa438ad457fd389d0f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatRowUI
+  statNameText: {fileID: 9219515615635778801}
+  valueText: {fileID: 1743193041475209293}
 --- !u!1 &6467596314148040697
 GameObject:
   m_ObjectHideFlags: 0

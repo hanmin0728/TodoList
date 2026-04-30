@@ -12,20 +12,22 @@ public class EquipmentManager : Singleton<EquipmentManager>
 
     public EquipmentGradeData gradeData;
 
+    public static Action OnEquipmentDataChanged;
+
     private void Start()
     {
         if (CSVManager.Instance.IsInitialized)
         {
-            InitEquipmentData();
+            LoadEquipmentData();
         }
         else
         {
-            CSVManager.Instance.OnLoadingComplete += InitEquipmentData;
+            CSVManager.Instance.OnLoadingComplete += LoadEquipmentData;
         }
     }
-    private void InitEquipmentData()
+    private void LoadEquipmentData()
     {
-        CSVManager.Instance.OnLoadingComplete -= InitEquipmentData;
+        CSVManager.Instance.OnLoadingComplete -= LoadEquipmentData;
         EquipDataDic.Clear();
 
         var table = CSVManager.Instance.GetTable("EquipmentTable");
@@ -84,11 +86,6 @@ public class EquipmentManager : Singleton<EquipmentManager>
 
         Debug.Log($"장비 데이터 {EquipDataDic.Count}개 로드 완료!");
     }
-    public EquipmentData GetEquipData(string id)
-    {
-        if (EquipDataDic.TryGetValue(id, out var data)) return data;
-        return null;
-    }
 
     public Sprite GetIcon(EquipmentData data)
     {
@@ -96,7 +93,6 @@ public class EquipmentManager : Singleton<EquipmentManager>
 
         if (iconCache.TryGetValue(data.IconName, out Sprite cachedSprite))
         {
-            Debug.Log("캐싱된거 잘 쓰고있음");
             return cachedSprite;
         }
 
@@ -116,4 +112,48 @@ public class EquipmentManager : Singleton<EquipmentManager>
 
         return sp;
     }
+
+    /// <summary>
+    /// 장비 합성 
+    /// </summary>
+    /// <param name="currentID">합성할 현재 장비 ID</param>
+    /// <returns>합성 성공 여부</returns>
+    public bool Synthesize(string currentID)
+    {
+        if (!EquipDataDic.TryGetValue(currentID, out var currentData))
+        {
+            Debug.LogError($"합성 오류: ID {currentID}를 찾을 수 없습니다.");
+            return false;
+        }
+
+        // 2. 다음 등급 장비가 있는지 확인
+        if (string.IsNullOrEmpty(currentData.NextID) || currentData.NextID == "Max")
+        {
+            Debug.LogWarning("최고 등급 장비이거나 다음 장비 데이터가 없습니다.");
+            return false;
+        }
+
+        int currentOwnedCount = SaveManager.Instance.CurrentData.GetEquipCount(currentID);
+        int needCount = currentData.NeedCount;
+
+        if (currentOwnedCount < needCount)
+        {
+            Debug.LogWarning($"재료 부족: {currentOwnedCount} / {needCount}");
+            return false;
+        }
+
+        //재료 차감 (0개가 되어도 삭제하지 않고 수치만 0으로 세팅)
+        int remainingCount = currentOwnedCount - needCount;
+        SaveManager.Instance.CurrentData.SetEquipCount(currentID, remainingCount);
+
+        // 다음 id 장비 추가
+        SaveManager.Instance.CurrentData.AddEquipCount(currentData.NextID, 1);
+
+        //데이터 저장 
+        SaveManager.Instance.SaveGame();
+        OnEquipmentDataChanged?.Invoke();
+        Debug.Log($"{currentData.Name} {needCount}개 소모 -> {currentData.NextID} 획득 성공!");
+        return true;
+    }
+
 }

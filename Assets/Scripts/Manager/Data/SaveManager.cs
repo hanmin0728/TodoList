@@ -36,6 +36,11 @@ public class SaveManager : Singleton<SaveManager>
         {
             EditorUtility.RevealInFinder(Path.Combine(Application.persistentDataPath, _saveFileName));
         }
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            CurrentData.AddEquipCount("Weapon_1", 1);
+            EquipmentManager.OnEquipmentDataChanged?.Invoke();
+        }
     }
     public void LoadGame()
     {

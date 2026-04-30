@@ -28,6 +28,7 @@ public class SaveData
         currentWaveIndex = waveIndex;
     }
     #endregion
+
     #region Upgrade Data
     // Key: ID, Value: Level
     [SerializeField] private SerializationDictionary<string, int> UpgradeLevels = new SerializationDictionary<string, int>();
@@ -36,7 +37,26 @@ public class SaveData
     public void SetUpgradeLevel(string id, int level) => UpgradeLevels[id] = level;
     #endregion
 
-  
+    #region Equipment Data
+    // Key: 장비 ID, Value: 보유 개수
+    [SerializeField] private SerializationDictionary<string, int> OwnedEquipments = new SerializationDictionary<string, int>();
+
+    // Key: 장비 타입(Weapon, Ring 등), Value: 장착 중인 장비 ID
+    [SerializeField] private SerializationDictionary<string, string> EquippedEquipments = new SerializationDictionary<string, string>();
+
+    public int GetEquipCount(string id) => OwnedEquipments.ContainsKey(id) ? OwnedEquipments[id] : 0;
+    public void AddEquipCount(string id, int count)
+    {
+        OwnedEquipments[id] = GetEquipCount(id) + count;
+    }
+    public void SetEquipCount(string id, int count) => OwnedEquipments[id] = count;
+
+    public string GetEquippedID(string type) => EquippedEquipments.ContainsKey(type) ? EquippedEquipments[type] : string.Empty;
+
+    public void SetEquippedID(string type, string id) => EquippedEquipments[type] = id;
+
+    #endregion
+
     public SaveData()
     {
         InitDefaultData();
@@ -54,8 +74,18 @@ public class SaveData
             UpgradeLevels["CriticalDamage"] = 1;   // 치명타데미지
 
             gold = 100;
+
+            // 스테이지 기본 데이터 초기화
             currentStageID = 101;
             currentWaveIndex = 1;
+
+            // 장비 기본 데이터 초기화
+            OwnedEquipments["Weapon_1"] = 1;
+
+            // 기본 장착 설정
+            EquippedEquipments["Weapon"] = string.Empty;
+            EquippedEquipments["Ring"] = string.Empty;
+
         }
     }
 

@@ -16,3 +16,7 @@ MonoBehaviour:
   rare: {fileID: 745470187430117782, guid: 07d14112a551c304e81299bcfa643767, type: 3}
   epic: {fileID: -2500523307979388095, guid: aac49624437bbd8459330f91b4784df8, type: 3}
   legend: {fileID: 5891696667252346562, guid: 330927eaad0f2cc47971d8482ec942da, type: 3}
+  normalBackground: {fileID: -6605334186251624791, guid: 836200cf30d65eb4da385ff8c737e576, type: 3}
+  rareBackground: {fileID: 5184239602929523753, guid: c116ca32bbda2654aae4d87286537b95, type: 3}
+  epicBackground: {fileID: 3612345932906060861, guid: 06cb8a5a64634f2478f718734b34fef6, type: 3}
+  legendBackground: {fileID: -6864871590214976725, guid: 71794317d2883e74cb7c5a9f6e51d3e4, type: 3}

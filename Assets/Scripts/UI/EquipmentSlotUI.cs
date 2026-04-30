@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,10 +10,11 @@ public class EquipmentSlotUI : MonoBehaviour
     [SerializeField] private Image rankBGImage;       // 등급별 배경 색상
     [SerializeField] private TextMeshProUGUI tierText; // 티어 표시 (예: T1, T2)
     [SerializeField] private TextMeshProUGUI countText;// 보유량 텍스트 (예: 5/5)
-    [SerializeField] private Image progressFill;      // 보유량 게이지 (Image Type: Filled)
-
+    [SerializeField] private Slider progressFillSlider;      // 보유량 게이지 (Image Type: Filled)
 
     public EquipmentData Data { get; private set; }
+
+    public static Action<EquipmentData> OnSlotClicked;
 
     /// <summary>
     /// 인벤토리 생성 시 최초 1회 설정
@@ -26,7 +28,6 @@ public class EquipmentSlotUI : MonoBehaviour
         tierText.text = $"Tier {data.Tier}";
 
         iconImage.sprite = EquipmentManager.Instance.GetIcon(data);
-
         UpdateUI();
     }
 
@@ -37,6 +38,14 @@ public class EquipmentSlotUI : MonoBehaviour
     {
         if (Data == null) return;
 
+        int currentCount = SaveManager.Instance.CurrentData.GetEquipCount(Data.ID);
+        int needCount = Data.NeedCount;
+
+        Debug.Log(Data.ID +" s    "  +  currentCount);
+
+
+        countText.text = $"{currentCount}/{needCount}";
+        progressFillSlider.value = (float)currentCount / Mathf.Max(1, needCount);
     }
 
     /// <summary>
@@ -44,7 +53,9 @@ public class EquipmentSlotUI : MonoBehaviour
     /// </summary>
     public void OnClickSlot()
     {
-        Debug.Log($"{Data.Name} 클릭됨!");
+        if (Data == null) return;
+
+        OnSlotClicked?.Invoke(Data);
     }
 
     private void SetGradeColor(GradeType grade)

@@ -17,9 +17,31 @@ public class EquipmentUIManager : MonoBehaviour
     [SerializeField] private Transform ringContent;
 
 
-    private List<EquipmentSlotUI> allSlots = new List<EquipmentSlotUI>();
+    public List<EquipmentSlotUI> allSlots = new List<EquipmentSlotUI>();
 
-    private bool isCreated = false; // 🌟 중복 생성 방지 플래그
+    private bool isCreated = false; // 중복 생성 방지 플래그
+
+
+    [SerializeField] private GearPopUp gearPopUp; 
+
+    private void OnEnable()
+    {
+        EquipmentSlotUI.OnSlotClicked += ShowGearPopup;
+        EquipmentManager.OnEquipmentDataChanged += RefreshAllSlots;
+
+    }
+
+    private void OnDisable()
+    {
+        EquipmentSlotUI.OnSlotClicked -= ShowGearPopup;
+        EquipmentManager.OnEquipmentDataChanged -= RefreshAllSlots;
+    }
+
+    private void ShowGearPopup(EquipmentData data)
+    {
+        gearPopUp.OpenPopup(data);
+    }
+
     void Start()
     {
         ChangeSubTab(0);
@@ -54,7 +76,7 @@ public class EquipmentUIManager : MonoBehaviour
             {
                 var go = Instantiate(slotPrefab, targetParent);
                 var slot = go.GetComponent<EquipmentSlotUI>();
-                slot.Setup(data); // 여기서 최초 1회 데이터 연결
+                slot.Setup(data); 
                 allSlots.Add(slot);
             }
         }
