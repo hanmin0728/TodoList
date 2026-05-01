@@ -19,18 +19,20 @@ public class EquipmentSlotUI : MonoBehaviour
 
     public static Action<EquipmentData> OnSlotClicked;
 
+    private bool isShopSlot = false;
 
     /// <summary>
     /// 인벤토리 생성 시 최초 1회 설정
     /// </summary>
-    public void Setup(EquipmentData data)
+    public void Setup(EquipmentData data, bool isShop = false)
     {
         Data = data;
+
+        isShopSlot = isShop;
 
         SetGradeColor(data.Grade);
         
         tierText.text = $"Tier {data.Tier}";
-
         iconImage.sprite = EquipmentManager.Instance.GetIcon(data);
         UpdateUI();
     }
@@ -44,19 +46,37 @@ public class EquipmentSlotUI : MonoBehaviour
 
         int currentCount = SaveManager.Instance.CurrentData.GetEquipCount(Data.ID);
         int needCount = Data.NeedCount;
+        
+        if (countText != null)
+        {
+            countText.text = $"{currentCount}/{needCount}";
 
-        countText.text = $"{currentCount}/{needCount}";
-        progressFillSlider.value = (float)currentCount / Mathf.Max(1, needCount);
+        }
+        
+        if (progressFillSlider != null)
+        {
+            progressFillSlider.value = (float)currentCount / Mathf.Max(1, needCount);
+        }
 
         bool isNew = SaveManager.Instance.CurrentData.IsNewItem(Data.ID);
         newBadge.SetActive(isNew && currentCount > 0);
 
-        string typeKey = Data.EquipType.ToString();
-        string equippedID = SaveManager.Instance.CurrentData.GetEquippedID(typeKey);
 
-        // 현재 슬롯의 ID가 장착된 ID와 일치하는지 확인
-        bool isEquipped = (Data.ID == equippedID);
-        equippedBadge.SetActive(isEquipped);
+        if (isShopSlot)
+        {
+            // 상점 슬롯이면 무조건 끈다!
+            equippedBadge.SetActive(false);
+        }
+        else
+        {
+            string typeKey = Data.EquipType.ToString();
+
+            string equippedID = SaveManager.Instance.CurrentData.GetEquippedID(typeKey);
+
+            // 현재 슬롯의 ID가 장착된 ID와 일치하는지 확인
+            bool isEquipped = (Data.ID == equippedID);
+            equippedBadge.SetActive(isEquipped);
+        }
     }
 
     /// <summary>

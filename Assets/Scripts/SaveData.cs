@@ -7,6 +7,14 @@ public class SaveData
 {
     #region 재화
     [SerializeField] private double gold = 0;
+    [SerializeField] private double gem = 0;
+
+    public double GetGem() => gem;
+    public void SetGem(double cost)
+    {
+        gem = cost;
+    }
+
     public double GetGold() => gold;
     public void SetGold(double cost)
     {
@@ -70,6 +78,20 @@ public class SaveData
 
     #endregion
 
+    #region Shop Data
+    [SerializeField] private int shopLevel = 1;
+    [SerializeField] private int shopSummonCount = 0;
+
+    public int GetShopLevel() => shopLevel;
+    public void SetShopLevel(int level) => shopLevel = level;
+
+    public int GetShopSummonCount() => shopSummonCount;
+    public void AddShopSummonCount(int count)
+    {
+        shopSummonCount += count;
+    }
+    #endregion
+
     public SaveData()
     {
         InitDefaultData();
@@ -99,6 +121,10 @@ public class SaveData
             // 기본 장착 설정
             EquippedEquipments["Weapon"] = string.Empty;
             EquippedEquipments["Ring"] = string.Empty;
+
+            //상점 기본 세팅
+            shopLevel = 1;
+            shopSummonCount = 0;
         }
     }
 
