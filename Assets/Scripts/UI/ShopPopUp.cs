@@ -1,45 +1,67 @@
-using DG.Tweening;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEngine.Rendering.DebugUI;
 
-public class ShopPopUp : MonoBehaviour
+public sealed class ShopPopUp : MonoBehaviour
 {
     [SerializeField] private Animator chestAnim;
     [SerializeField] private RawImage chestRawImage;
-    public GameObject panel;
+    [SerializeField] private GameObject panel;
+    [SerializeField] private Transform slotParent;
+    [SerializeField] private GameObject slotPrefab;
 
-    public Transform slotParent;       // 슬롯들이 생성될 부모
-    public GameObject slotPrefab;
-   
-    [Header("등급별 파티클 색상")]
-    public Color normalColor = Color.green;
-    public Color rareColor = Color.blue;
-    public Color epicColor = new Color(0.5f, 0f, 0.5f); //보라
-    public Color legendColor = Color.yellow;
-
+    [Header("Grade Particle Colors")]
+    [SerializeField] private Color normalColor = Color.green;
+    [SerializeField] private Color rareColor = Color.blue;
+    [SerializeField] private Color epicColor = new Color(0.5f, 0f, 0.5f);
+    [SerializeField] private Color legendColor = Color.yellow;
     [SerializeField] private ParticleSystem[] glowParticles;
 
-    [Header("연출 설정")]
+    [Header("Animation Settings")]
     [SerializeField] private float newItemshakeDuration = 1.5f;
     [SerializeField] private float shakeDuration = 0.5f;
-    [SerializeField] private float chestOpenDelay = 3f; // 상자 열리고 팝업 나올 때까지 대기 시간
+    [SerializeField] private float chestOpenDelay = 3f;
+    [SerializeField] private float slotDelay = 0.2f;
+    [SerializeField] private Vector2 singleSlotSize = new Vector2(200, 200);
+    [SerializeField] private Vector2 multiSlotSize = new Vector2(130, 130);
 
-    public float slotDelay = 0.2f;     // 슬롯 따다닥 간격
+    private readonly List<EquipmentSlotUI> resultSlots = new List<EquipmentSlotUI>();
+    private GridLayoutGroup gridLayoutGroup;
+    private Coroutine popupRoutine;
+    private WaitForSeconds newItemShakeWait;
+    private WaitForSeconds shakeWait;
+    private WaitForSeconds chestOpenWait;
+    private WaitForSeconds fadeWait;
+    private WaitForSeconds slotDelayWait;
 
-    [SerializeField] private Vector2 singleSlotSize = new Vector2(200, 200); // 1개 뽑을 때 크기
-    [SerializeField] private Vector2 multiSlotSize = new Vector2(130, 130);  // 10개 뽑을 때 크기
+    private void Awake()
+    {
+        gridLayoutGroup = slotParent.GetComponent<GridLayoutGroup>();
+        CacheYieldInstructions();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        CacheYieldInstructions();
+    }
+#endif
 
     public void RefreshSettingUI()
     {
-        panel.SetActive(false);
-
-        foreach (Transform child in slotParent)
+        if (popupRoutine != null)
         {
-            Destroy(child.gameObject);
+            StopCoroutine(popupRoutine);
+            popupRoutine = null;
         }
+
+        panel.SetActive(false);
+        SetResultSlotsActive(0);
+
+        chestRawImage.DOKill();
+        chestRawImage.gameObject.SetActive(true);
 
         Color resetColor = chestRawImage.color;
         resetColor.a = 1f;
@@ -49,116 +71,165 @@ public class ShopPopUp : MonoBehaviour
     public void ShowPopup(List<string> resultIDs)
     {
         gameObject.SetActive(true);
-        
         RefreshSettingUI();
-
-        chestRawImage.gameObject.SetActive(true);
-
-
-        GridLayoutGroup grid = slotParent.GetComponent<GridLayoutGroup>();
-        if (resultIDs.Count == 1)
-        {
-            grid.cellSize = singleSlotSize;
-            grid.padding.bottom = 300;
-        }
-        else
-        {
-            grid.cellSize = grid.cellSize = singleSlotSize;
-            grid.padding.bottom = 300; ;
-            grid.padding.bottom = 500;
-        }
+        ApplyGridLayout(resultIDs.Count);
 
         chestAnim.Play("ANIM_Chest_Royal_Intro", -1, 0f);
 
         GradeType maxGrade = GradeType.Normal;
         bool hasNewItem = false;
 
-        foreach (string id in resultIDs)
+        for (int i = 0; i < resultIDs.Count; i++)
         {
-            var data = EquipmentManager.Instance.EquipDataDic[id];
+            if (!EquipmentManager.Instance.TryGetEquipmentData(resultIDs[i], out EquipmentData data))
+            {
+                continue;
+            }
 
             if (data.Grade > maxGrade)
+            {
                 maxGrade = data.Grade;
+            }
 
-            if (SaveManager.Instance.CurrentData.GetEquipCount(id) == 1)
+            if (SaveManager.Instance.CurrentData.GetEquipCount(resultIDs[i]) == 1)
+            {
                 hasNewItem = true;
+            }
         }
 
-        //등급에 따라 파티클 색상 설정
         SetParticleColor(maxGrade);
+        popupRoutine = StartCoroutine(ChestAnimationRoutine(resultIDs, hasNewItem));
+    }
 
-        // 연출
-        StartCoroutine(ChestAnimationRoutine(resultIDs, hasNewItem));
+    private IEnumerator ChestAnimationRoutine(List<string> resultIDs, bool hasNewItem)
+    {
+        if (hasNewItem)
+        {
+            chestRawImage.rectTransform.DOShakeAnchorPos(newItemshakeDuration, 30f, 40);
+            yield return newItemShakeWait;
+        }
+        else
+        {
+            chestRawImage.rectTransform.DOShakeAnchorPos(shakeDuration, 20f, 30);
+            yield return shakeWait;
+        }
 
+        chestAnim.Play("ANIM_Chest_Royal_Open", -1, 0f);
+        PlayGlowParticles();
+
+        yield return chestOpenWait;
+
+        chestRawImage.DOFade(0f, 0.3f);
+        yield return fadeWait;
+
+        panel.SetActive(true);
+        panel.transform.DOKill();
+        panel.transform.localScale = Vector3.zero;
+        panel.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
+
+        for (int i = 0; i < resultIDs.Count; i++)
+        {
+            if (!EquipmentManager.Instance.TryGetEquipmentData(resultIDs[i], out EquipmentData data))
+            {
+                continue;
+            }
+
+            EquipmentSlotUI slot = GetOrCreateResultSlot(i);
+            Transform slotTransform = slot.transform;
+
+            slot.gameObject.SetActive(true);
+            slot.Setup(data, true);
+            slotTransform.DOKill();
+            slotTransform.localScale = Vector3.zero;
+            slotTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack);
+
+            yield return slotDelayWait;
+        }
+
+        SetResultSlotsActive(resultIDs.Count);
+        popupRoutine = null;
+    }
+
+    private EquipmentSlotUI GetOrCreateResultSlot(int index)
+    {
+        if (index < resultSlots.Count)
+        {
+            return resultSlots[index];
+        }
+
+        GameObject slotObject = Instantiate(slotPrefab, slotParent);
+        EquipmentSlotUI slot = slotObject.GetComponent<EquipmentSlotUI>();
+        resultSlots.Add(slot);
+        return slot;
+    }
+
+    private void SetResultSlotsActive(int activeCount)
+    {
+        for (int i = 0; i < resultSlots.Count; i++)
+        {
+            resultSlots[i].gameObject.SetActive(i < activeCount);
+        }
+    }
+
+    private void ApplyGridLayout(int resultCount)
+    {
+        if (gridLayoutGroup == null)
+        {
+            return;
+        }
+
+        bool isSingleResult = resultCount == 1;
+        gridLayoutGroup.cellSize = isSingleResult ? singleSlotSize : multiSlotSize;
+        gridLayoutGroup.padding.bottom = isSingleResult ? 300 : 500;
     }
 
     private void SetParticleColor(GradeType maxGrade)
     {
         Color targetColor = normalColor;
-        if (maxGrade == GradeType.Rare) targetColor = rareColor;
-        else if (maxGrade == GradeType.Epic) targetColor = epicColor;
-        else if (maxGrade == GradeType.Legend) targetColor = legendColor;
 
-        foreach (ParticleSystem particle in glowParticles)
+        if (maxGrade == GradeType.Rare)
         {
-            if (particle != null)
+            targetColor = rareColor;
+        }
+        else if (maxGrade == GradeType.Epic)
+        {
+            targetColor = epicColor;
+        }
+        else if (maxGrade == GradeType.Legend)
+        {
+            targetColor = legendColor;
+        }
+
+        for (int i = 0; i < glowParticles.Length; i++)
+        {
+            ParticleSystem particle = glowParticles[i];
+            if (particle == null)
             {
-                var main = particle.main;
-                main.startColor = targetColor;
+                continue;
             }
+
+            ParticleSystem.MainModule main = particle.main;
+            main.startColor = targetColor;
         }
     }
 
-    private IEnumerator ChestAnimationRoutine(List<string> resultIDs, bool hasNewItem)
+    private void PlayGlowParticles()
     {
-        // 신규 장비가 있다면 상자 오래 흔들기
-        if (hasNewItem)
+        for (int i = 0; i < glowParticles.Length; i++)
         {
-            chestRawImage.rectTransform.DOShakeAnchorPos(newItemshakeDuration, 30f, 40);
-            yield return new WaitForSeconds(newItemshakeDuration);
-        }
-        else
-        {
-            chestRawImage.rectTransform.DOShakeAnchorPos(shakeDuration, 20f, 30);
-            yield return new WaitForSeconds(shakeDuration);
-        }
-
-        chestAnim.Play("ANIM_Chest_Royal_Open", -1, 0f);
-
-
-        foreach (ParticleSystem particle in glowParticles)
-        {
-            if (particle != null) particle.Play();
-        }
-
-        //상자 애니메이션 보여줄 시간
-        yield return new WaitForSeconds(chestOpenDelay);
-
-        chestRawImage.DOFade(0f, 0.3f);
-        yield return new WaitForSeconds(0.3f);
-
-        panel.SetActive(true);
-        panel.transform.localScale = Vector3.zero;
-        panel.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
-
-        foreach (string id in resultIDs)
-        {
-            GameObject slotGO = Instantiate(slotPrefab, slotParent);
-            EquipmentSlotUI slotUI = slotGO.GetComponent<EquipmentSlotUI>();
-
-            if (EquipmentManager.Instance.EquipDataDic.TryGetValue(id, out var data))
+            if (glowParticles[i] != null)
             {
-                slotUI.Setup(data, true);
-                slotUI.UpdateUI();
+                glowParticles[i].Play();
             }
-
-            slotGO.transform.localScale = Vector3.zero;
-            slotGO.transform.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack);
-
-            yield return new WaitForSeconds(slotDelay);
         }
     }
 
-
-
+    private void CacheYieldInstructions()
+    {
+        newItemShakeWait = new WaitForSeconds(Mathf.Max(0f, newItemshakeDuration));
+        shakeWait = new WaitForSeconds(Mathf.Max(0f, shakeDuration));
+        chestOpenWait = new WaitForSeconds(Mathf.Max(0f, chestOpenDelay));
+        fadeWait = new WaitForSeconds(0.3f);
+        slotDelayWait = new WaitForSeconds(Mathf.Max(0f, slotDelay));
+    }
 }

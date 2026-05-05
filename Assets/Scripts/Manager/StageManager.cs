@@ -3,25 +3,47 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-public class StageManager : Singleton<StageManager>
+public sealed class StageManager : Singleton<StageManager>
 {
-    [Header("진행 상태")]
-    private int currentStageID = 101;
-    private int currentWaveIndex = 1;
+    [Header("Progress")]
+    [SerializeField] private int currentStageID = 101;
+    [SerializeField] private int currentWaveIndex = 1;
+
+    [Header("Timing")]
+    [SerializeField] private float spawnInterval = 0.2f;
+    [SerializeField] private float normalWaveDelay = 1.5f;
+    [SerializeField] private float bossClearDelay = 3.0f;
+
+    private readonly Dictionary<int, StageData> stageDataByKey = new Dictionary<int, StageData>();
+    private WaitForSeconds spawnIntervalWait;
+    private WaitForSeconds normalWaveDelayWait;
+    private WaitForSeconds bossClearDelayWait;
+    private bool isWaveActive;
+
+    public event Action<int, int> OnWaveChanged;
+
     public int GetCurrentStageID() => currentStageID;
     public int GetCurrentWaveIndex() => currentWaveIndex;
 
-    private bool isWaveActive = false;
+    protected override void Awake()
+    {
+        base.Awake();
+        if (Instance != this)
+        {
+            return;
+        }
 
-    private Dictionary<string, StageData> stageDataDic = new Dictionary<string, StageData>();
+        CacheYieldInstructions();
+    }
 
-    [Header("시간 설정")]
-    [SerializeField] private float normalWaveDelay = 1.5f; // 일반 웨이브 간 대기 시간
-    [SerializeField] private float bossClearDelay = 3.0f;  // 보스 클리어 후 대기 시간
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        CacheYieldInstructions();
+    }
+#endif
 
-    public event Action<int, int> OnWaveChanged;
-    void Start()
+    private void Start()
     {
         if (CSVManager.Instance.IsInitialized)
         {
@@ -33,13 +55,37 @@ public class StageManager : Singleton<StageManager>
         }
     }
 
+    public void StartWave(int stageID, int waveIndex)
+    {
+        if (isWaveActive)
+        {
+            return;
+        }
+
+        int key = MakeStageKey(stageID, waveIndex);
+        if (!stageDataByKey.TryGetValue(key, out StageData currentWaveData))
+        {
+            Debug.Log("[StageManager] All stages cleared or stage data is missing.");
+            return;
+        }
+
+        StartCoroutine(WaveRoutine(currentWaveData));
+        OnWaveChanged?.Invoke(stageID, waveIndex);
+    }
+
     private void InitStageData()
     {
         CSVManager.Instance.OnLoadingComplete -= InitStageData;
-        stageDataDic.Clear();
+        stageDataByKey.Clear();
 
-        var table = CSVManager.Instance.GetTable("StageTable");
-        foreach (var row in table)
+        List<Dictionary<string, object>> table = CSVManager.Instance.GetTable("StageTable");
+        if (table == null)
+        {
+            Debug.LogError("[StageManager] StageTable is missing. Check CSVManager file names.");
+            return;
+        }
+
+        foreach (Dictionary<string, object> row in table)
         {
             StageData data = new StageData
             {
@@ -49,68 +95,40 @@ public class StageManager : Singleton<StageManager>
                 EnemyCount = int.Parse(row["EnemyCount"].ToString())
             };
 
-            string key = $"{data.StageID}_{data.WaveIndex}";
-            if (!stageDataDic.ContainsKey(key))
+            int key = MakeStageKey(data.StageID, data.WaveIndex);
+            if (!stageDataByKey.ContainsKey(key))
             {
-                stageDataDic.Add(key, data);
+                stageDataByKey.Add(key, data);
             }
         }
-        
-        Debug.Log($"<color=green>스테이지 데이터 {stageDataDic.Count}개 로드 완료!</color>");
 
-        if (SaveManager.Instance != null && SaveManager.Instance.CurrentData != null)
+        SaveData saveData = SaveManager.Instance.CurrentData;
+        if (saveData != null)
         {
-            currentStageID = SaveManager.Instance.CurrentData.GetStageID();
-            currentWaveIndex = SaveManager.Instance.CurrentData.GetWaveIndex();
+            currentStageID = saveData.GetStageID();
+            currentWaveIndex = saveData.GetWaveIndex();
         }
 
+        Debug.Log($"[StageManager] Stage table loaded. Count: {stageDataByKey.Count}");
         StartWave(currentStageID, currentWaveIndex);
     }
-    public void StartWave(int stageID, int waveIndex)
-    {
-        if (isWaveActive) return;
 
-        string key = $"{stageID}_{waveIndex}";
-
-        if (stageDataDic.TryGetValue(key, out StageData currentWaveData))
-        {
-            StartCoroutine(WaveRoutine(currentWaveData));
-            OnWaveChanged?.Invoke(stageID, waveIndex);
-        }
-        else
-        {
-            Debug.Log("<color=yellow>모든 스테이지를 클리어했습니다!</color>");
-        }
-    }
     private IEnumerator WaveRoutine(StageData data)
     {
         isWaveActive = true;
 
-        if (data.IsBossWave)
-        {
-            Debug.Log($"<color=red>⚠️ 보스 등장! Stage {data.StageID} - Boss Wave ⚠️</color>");
-        }
-        else
-        {
-        }
-
-        // 몬스터 소환
         for (int i = 0; i < data.EnemyCount; i++)
         {
             EnemySpawner.Instance.SpawnEnemy(data.EnemyID);
-            yield return new WaitForSeconds(0.2f); // 소환 간격
+            yield return spawnIntervalWait;
         }
 
-        yield return new WaitUntil(() => EnemySpawner.Instance.GetActiveEnemyCount() == 0);
+        while (EnemySpawner.Instance.GetActiveEnemyCount() > 0)
+        {
+            yield return null;
+        }
 
-        if (data.IsBossWave)
-        {
-            yield return new WaitForSeconds(bossClearDelay);
-        }
-        else
-        {
-            yield return new WaitForSeconds(normalWaveDelay);
-        }
+        yield return data.IsBossWave ? bossClearDelayWait : normalWaveDelayWait;
 
         isWaveActive = false;
         NextWave();
@@ -120,17 +138,27 @@ public class StageManager : Singleton<StageManager>
     {
         currentWaveIndex++;
 
-        // 4웨이브(보스)까지 깼다면 다음 스테이지로!
         if (currentWaveIndex > 4)
         {
             currentWaveIndex = 1;
             currentStageID++;
-            Debug.Log($"<color=green>스테이지 클리어! 다음 스테이지: {currentStageID}</color>");
+            Debug.Log($"[StageManager] Stage cleared. Next stage: {currentStageID}");
         }
 
         SaveManager.Instance.CurrentData.SetStageProgress(currentStageID, currentWaveIndex);
-        SaveManager.Instance.SaveGame(); 
-
+        SaveManager.Instance.SaveGame();
         StartWave(currentStageID, currentWaveIndex);
+    }
+
+    private void CacheYieldInstructions()
+    {
+        spawnIntervalWait = new WaitForSeconds(Mathf.Max(0f, spawnInterval));
+        normalWaveDelayWait = new WaitForSeconds(Mathf.Max(0f, normalWaveDelay));
+        bossClearDelayWait = new WaitForSeconds(Mathf.Max(0f, bossClearDelay));
+    }
+
+    private static int MakeStageKey(int stageID, int waveIndex)
+    {
+        return stageID * 100 + waveIndex;
     }
 }

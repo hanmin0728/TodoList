@@ -1,56 +1,48 @@
-using UnityEngine;
+﻿using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
-public class GearPopUp : MonoBehaviour
+public sealed class GearPopUp : MonoBehaviour
 {
-    [Header("상단 정보")]
+    [Header("Top Info")]
     [SerializeField] private EquipmentSlotUI slot;
     [SerializeField] private TextMeshProUGUI gearNameText;
     [SerializeField] private TextMeshProUGUI rankText;
     [SerializeField] private Image rankImage;
 
-    [Header("능력치 생성 설정")]
-    [SerializeField] private GameObject statRowPrefab;   // 생성할 Stat_Row 프리팹
-    [SerializeField] private Transform equipContent;     // 장착 효과 스크롤뷰의 Content
-    [SerializeField] private Transform passiveContent;   // 패시브 효과 스크롤뷰의 Content
+    [Header("Stat Rows")]
+    [SerializeField] private GameObject statRowPrefab;
+    [SerializeField] private Transform equipContent;
+    [SerializeField] private Transform passiveContent;
 
+    [Header("Equip Button")]
+    [SerializeField] private Button equipButton;
+    [SerializeField] private TextMeshProUGUI equipButtonText;
 
-    [Header("장착 버튼 UI")]
-    [SerializeField] private Button equipButton; // 인스펙터에서 장착 버튼 연결
-    [SerializeField] private TextMeshProUGUI equipButtonText; // "장착" 글자 연결
-    private EquipmentData data;
+    private readonly List<StatRowUI> equipStatRows = new List<StatRowUI>();
+    private readonly List<StatRowUI> passiveStatRows = new List<StatRowUI>();
+
+    private EquipmentData currentData;
+
     private void OnEnable()
     {
-        EquipmentManager.OnEquipmentDataChanged += RefreshPopupUI;
+        EquipmentManager.EquipmentDataChanged += RefreshPopupUI;
     }
 
     private void OnDisable()
     {
-        EquipmentManager.OnEquipmentDataChanged -= RefreshPopupUI;
-    }
-    private void RefreshPopupUI()
-    {
-        if (data == null) return;
-
-        slot.UpdateUI();
-
-        RefreshEquipButtonState();
-
-        RefreshStatList(data);
+        EquipmentManager.EquipmentDataChanged -= RefreshPopupUI;
     }
 
-    // 장비 슬롯을 눌렀을 때 호출될 함수
     public void OpenPopup(EquipmentData data)
     {
-        this.data = data;
+        currentData = data;
 
         slot.Setup(data);
-
         gearNameText.text = data.Name;
         rankText.text = data.Grade.ToString();
-
-        rankImage.sprite = EquipmentManager.Instance.gradeData.GetSpriteBackground(data.Grade);
+        rankImage.sprite = EquipmentManager.Instance.GradeData.GetSpriteBackground(data.Grade);
 
         RefreshPopupUI();
         gameObject.SetActive(true);
@@ -61,97 +53,116 @@ public class GearPopUp : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void RefreshStatList(EquipmentData data)
-    {
-        ClearOldRows(equipContent);
-        ClearOldRows(passiveContent);
-
-        if (data.EquipStatType_1 != StatType.None)
-        {
-            CreateStatRow(equipContent, data.EquipStatType_1, data.EquipStatValue_1);
-        }
-
-        // 두 번째 장착 능력치
-        if (data.EquipStatType_2 != StatType.None)
-        {
-            CreateStatRow(equipContent, data.EquipStatType_2, data.EquipStatValue_2);
-        }
-
-        // 3. 보유 능력치 (패시브) 생성
-        if (data.OwnStatType != StatType.None)
-        {
-            CreateStatRow(passiveContent, data.OwnStatType, data.OwnStatValue);
-        }
-    }
-
-    private void CreateStatRow(Transform parent, StatType type, double value)
-    {
-        GameObject go = Instantiate(statRowPrefab, parent);
-        StatRowUI rowUI = go.GetComponent<StatRowUI>();
-        rowUI.Setup(type.ToString(), value);
-    }
-
-    private void ClearOldRows(Transform content)
-    {
-        foreach (Transform child in content)
-        {
-            Destroy(child.gameObject);
-        }
-    }
-
     public void OnClickSynthesisButton()
     {
-        bool success = EquipmentManager.Instance.Synthesize(data.ID);
-
-        if (success)
+        if (currentData == null)
         {
-            OpenPopup(data);
+            return;
         }
-        else
+
+        if (EquipmentManager.Instance.Synthesize(currentData.ID))
         {
+            RefreshPopupUI();
         }
     }
 
     public void OnClickEquipButton()
     {
-        if (data == null) return;
+        if (currentData == null)
+        {
+            return;
+        }
 
-        // 장착 실행
-        EquipmentManager.Instance.EquipItem(data.ID);
-
-        // 장착 후 버튼 표기 다시 새로고침
+        EquipmentManager.Instance.EquipItem(currentData.ID);
         RefreshEquipButtonState();
     }
 
-    /// <summary>
-    /// 현재 장비가 장착 중인지 확인하여 버튼 텍스트 변경
-    /// </summary>
+    private void RefreshPopupUI()
+    {
+        if (currentData == null)
+        {
+            return;
+        }
+
+        slot.UpdateUI();
+        RefreshEquipButtonState();
+        RefreshStatList(currentData);
+    }
+
+    private void RefreshStatList(EquipmentData data)
+    {
+        int equipIndex = 0;
+        int passiveIndex = 0;
+
+        if (data.EquipStatType_1 != StatType.None)
+        {
+            SetStatRow(equipContent, equipStatRows, equipIndex++, data.EquipStatType_1, data.EquipStatValue_1);
+        }
+
+        if (data.EquipStatType_2 != StatType.None)
+        {
+            SetStatRow(equipContent, equipStatRows, equipIndex++, data.EquipStatType_2, data.EquipStatValue_2);
+        }
+
+        if (data.OwnStatType != StatType.None)
+        {
+            SetStatRow(passiveContent, passiveStatRows, passiveIndex++, data.OwnStatType, data.OwnStatValue);
+        }
+
+        SetRowsActive(equipStatRows, equipIndex);
+        SetRowsActive(passiveStatRows, passiveIndex);
+    }
+
     private void RefreshEquipButtonState()
     {
-        string typeKey = data.EquipType.ToString();
-        string equippedID = SaveManager.Instance.CurrentData.GetEquippedID(typeKey);
-
-        // 1. 현재 보고 있는 장비를 장착 중인지 확인
-        bool isEquipped = (equippedID == data.ID);
-  
-        bool wasAcquired = SaveManager.Instance.CurrentData.IsUnlocked(data.ID);
+        SaveData saveData = SaveManager.Instance.CurrentData;
+        string equippedId = saveData.GetEquippedID(currentData.EquipType.ToString());
+        bool isEquipped = equippedId == currentData.ID;
+        bool isUnlocked = saveData.IsUnlocked(currentData.ID);
 
         if (isEquipped)
         {
             equipButtonText.text = "장착 중";
             equipButton.interactable = false;
+            return;
         }
-        else if (!wasAcquired)
+
+        if (!isUnlocked)
         {
-            // 딕셔너리에 ID가 아예 없으므로 한 번도 얻은 적 없는 상태
             equipButtonText.text = "미보유";
             equipButton.interactable = false;
+            return;
         }
-        else
+
+        equipButtonText.text = "장착";
+        equipButton.interactable = true;
+    }
+
+    private void SetStatRow(Transform parent, List<StatRowUI> rows, int index, StatType type, double value)
+    {
+        StatRowUI row = GetOrCreateRow(parent, rows, index);
+        row.gameObject.SetActive(true);
+        row.Setup(type, value);
+    }
+
+    private StatRowUI GetOrCreateRow(Transform parent, List<StatRowUI> rows, int index)
+    {
+        if (index < rows.Count)
         {
-            // 딕셔너리에 ID가 존재한다면  장착 가능!
-            equipButtonText.text = "장착";
-            equipButton.interactable = true;
+            return rows[index];
+        }
+
+        GameObject rowObject = Instantiate(statRowPrefab, parent);
+        StatRowUI row = rowObject.GetComponent<StatRowUI>();
+        rows.Add(row);
+        return row;
+    }
+
+    private static void SetRowsActive(List<StatRowUI> rows, int activeCount)
+    {
+        for (int i = 0; i < rows.Count; i++)
+        {
+            rows[i].gameObject.SetActive(i < activeCount);
         }
     }
 }

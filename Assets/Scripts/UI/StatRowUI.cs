@@ -1,27 +1,33 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
-public class StatRowUI : MonoBehaviour
+public sealed class StatRowUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI statNameText;
     [SerializeField] private TextMeshProUGUI valueText;
 
-    public void Setup(string statName, double value)
+    public void Setup(StatType statType, double value)
     {
-        statNameText.text = GetStatKorName(statName);
+        statNameText.text = GetDisplayName(statType);
         valueText.text = $"{value}%";
     }
 
-    private string GetStatKorName(string engName)
+    private static string GetDisplayName(StatType statType)
     {
-        return engName switch
+        switch (statType)
         {
-            "Atk" => "공격력 증가",
-            "Hp" => "체력 증가",
-            "AtkSpeed" => "공격 속도 증가",
-            "CriticalChance" => "크리티컬 확률",
-            "CriticalDamage" => "크리티컬 데미지",
-            _ => engName
-        };
+            case StatType.Atk:
+                return "공격력 증가";
+            case StatType.Hp:
+                return "체력 증가";
+            case StatType.AtkSpeed:
+                return "공격 속도 증가";
+            case StatType.CriticalChance:
+                return "치명타 확률";
+            case StatType.CriticalDamage:
+                return "치명타 피해";
+            default:
+                return statType.ToString();
+        }
     }
 }

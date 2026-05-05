@@ -1,18 +1,28 @@
-using UnityEngine;
+癤퓎sing UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "PlayerData", menuName = "Scriptable Objects/PlayerData")]
-public class PlayerData : ScriptableObject
+public sealed class PlayerData : ScriptableObject
 {
-    [Header("이동 속도")]
-    public float scrollSpeed = 5.0f;
+    [Header("Movement")]
+    [SerializeField] private float scrollSpeed = 5.0f;
 
-    [Header("전투 능력치")]
-    public float hp;
-    public float attackRange = 1.5f;
-    public float attackDamage = 10f;
-    public float attackDelay = 1.0f;
-    public float knockBackForce = 3f;
+    [Header("Combat")]
+    [SerializeField] private float hp = 100f;
+    [SerializeField] private float attackRange = 1.5f;
+    [SerializeField] private float attackDamage = 10f;
+    [SerializeField] private float attackDelay = 1.0f;
+    [SerializeField] private float knockBackForce = 3f;
 
-    [Header("애니메이션 파라미터")]
-    public string attacAnimationParam = "PlayerAttack";
+    [Header("Animation")]
+    [FormerlySerializedAs("attacAnimationParam")]
+    [SerializeField] private string attackAnimationParam = "PlayerAttack";
+
+    public float ScrollSpeed => scrollSpeed;
+    public float Hp => hp;
+    public float AttackRange => attackRange;
+    public float AttackDamage => attackDamage;
+    public float AttackDelay => attackDelay;
+    public float KnockBackForce => knockBackForce;
+    public string AttackAnimationParam => attackAnimationParam;
 }

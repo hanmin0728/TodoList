@@ -1,71 +1,101 @@
 using System;
 using System.Collections;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class SaveManager : Singleton<SaveManager>
 {
-    public SaveData CurrentData;
-    private string _saveFileName = "SaveData.json";
+    private const string SaveFileName = "SaveData.json";
+    private static readonly WaitForSeconds AutoSaveDelay = new WaitForSeconds(60f);
 
-    public Action OnDataLoaded; // 로드 완료 알림용 액션
+#if UNITY_EDITOR
+    [SerializeField] private bool enableEditorHotkeys;
+#endif
+
+    // 로드 완료 알림용 액션
+    public event Action OnDataLoaded;
+
+    public SaveData CurrentData { get; private set; }
+
     protected override void Awake()
     {
+        base.Awake();
+
+        if (Instance != this)
+        {
+            return;
+        }
+
         LoadGame();
     }
+
     private void Start()
     {
         StartCoroutine(AutoSaveCoroutine());
     }
-    
-    public void SaveGame()
-    {
-        string json = JsonUtility.ToJson(CurrentData);
-        string encryptedData = CryptoUtility.Encrypt(json); // AES 암호화
-        string filePath = Path.Combine(Application.persistentDataPath, _saveFileName);
 
-        File.WriteAllText(filePath, encryptedData);
-        Debug.Log("데이터 암호화 저장 완료!");
-    }
-
+#if UNITY_EDITOR
     private void Update()
     {
-        /// 에디터용
-        if (Input.GetKeyDown(KeyCode.O)) // O키를 누르면 폴더가 열림
+        if (!enableEditorHotkeys)
         {
-            EditorUtility.RevealInFinder(Path.Combine(Application.persistentDataPath, _saveFileName));
+            return;
         }
-        if (Input.GetKeyDown(KeyCode.Z))
+
+        if (Input.GetKeyDown(KeyCode.O))
         {
-            CurrentData.AddEquipCount("Weapon_1", 1);
-            EquipmentManager.OnEquipmentDataChanged?.Invoke();
+            EditorUtility.RevealInFinder(GetSaveFilePath());
         }
+
     }
+#endif
+
+    public void SaveGame()
+    {
+        if (CurrentData == null)
+        {
+            return;
+        }
+
+        string json = JsonUtility.ToJson(CurrentData);
+        string encryptedData = CryptoUtility.Encrypt(json);
+        File.WriteAllText(GetSaveFilePath(), encryptedData);
+    }
+
     public void LoadGame()
     {
-        string filePath = Path.Combine(Application.persistentDataPath, _saveFileName);
+        string filePath = GetSaveFilePath();
 
-        if (File.Exists(filePath))
+        if (!File.Exists(filePath))
         {
-            try
+            CurrentData = new SaveData();
+            OnDataLoaded?.Invoke();
+            return;
+        }
+
+        try
+        {
+            string encryptedData = File.ReadAllText(filePath);
+            string decryptedJson = CryptoUtility.Decrypt(encryptedData);
+            CurrentData = JsonUtility.FromJson<SaveData>(decryptedJson);
+
+            if (CurrentData == null)
             {
-                string encryptedData = File.ReadAllText(filePath);
-                string decryptedJson = CryptoUtility.Decrypt(encryptedData); // AES 복호화
-                CurrentData = JsonUtility.FromJson<SaveData>(decryptedJson);
-                OnDataLoaded?.Invoke();
-                Debug.Log("세이브 파일 불러오기 성공!");
-            }
-            catch (Exception)
-            {
-                Debug.LogError("세이브 파일 변조 감지! 초기화합니다.");
                 CurrentData = new SaveData();
             }
+
+            OnDataLoaded?.Invoke();
         }
-        else
+        catch (Exception e)
         {
             //세이브 파일이 없는 신규 유저
+            Debug.LogError($"[SaveManager] Failed to load save file. A new save will be created. Error: {e.Message}");
             CurrentData = new SaveData();
+            OnDataLoaded?.Invoke();
         }
     }
 
@@ -73,27 +103,35 @@ public class SaveManager : Singleton<SaveManager>
     {
         while (true)
         {
-            yield return new WaitForSeconds(60f); // 60초마다 저장
+            yield return AutoSaveDelay;
             SaveGame();
-            Debug.Log("자동 저장 완료!");
         }
     }
 
-    private void OnApplicationPause(bool pause)
+    private void OnApplicationPause(bool isPaused)
     {
-        // 앱이 백그라운드로 넘어가거나 다시 돌아올 때 호출
-        if (pause) SaveGame();
+        if (isPaused)
+        {
+            SaveGame();
+        }
     }
 
-    private void OnApplicationFocus(bool focus)
+    private void OnApplicationFocus(bool hasFocus)
     {
-        // 유니티 에디터나 모바일에서 포커스를 잃을 때 호출
-        if (!focus) SaveGame();
+        if (!hasFocus)
+        {
+            SaveGame();
+        }
     }
+
     protected override void OnApplicationQuit()
     {
-        base.OnApplicationQuit();
         SaveGame();
-        Debug.Log("앱 종료 시 데이터 자동 저장 완료!");
+        base.OnApplicationQuit();
+    }
+
+    private static string GetSaveFilePath()
+    {
+        return Path.Combine(Application.persistentDataPath, SaveFileName);
     }
 }

@@ -1,133 +1,142 @@
-using System;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 
-[System.Serializable]
-public class SaveData
+[Serializable]
+public sealed class SaveData
 {
-    #region 재화
-    [SerializeField] private double gold = 0;
-    [SerializeField] private double gem = 0;
+    [SerializeField] private double gold;
+    [SerializeField] private double gem;
 
-    public double GetGem() => gem;
-    public void SetGem(double cost)
-    {
-        gem = cost;
-    }
-
-    public double GetGold() => gold;
-    public void SetGold(double cost)
-    {
-        gold = cost;
-    }
-    #endregion
-
-    #region stage 관련
     [SerializeField] private int currentStageID = 101;
     [SerializeField] private int currentWaveIndex = 1;
 
+    [SerializeField] private SerializationDictionary<string, int> UpgradeLevels = new SerializationDictionary<string, int>();
+
+    // Key: 장비 ID, Value: 보유 개수
+    [SerializeField] private SerializationDictionary<string, int> OwnedEquipments = new SerializationDictionary<string, int>(); 
+    //Key: 장비 타입(Weapon, Ring 등), Value: 장착 중인 장비 ID
+    [SerializeField] private SerializationDictionary<string, string> EquippedEquipments = new SerializationDictionary<string, string>(); 
+    [SerializeField] private SerializationDictionary<string, bool> NewItemStatus = new SerializationDictionary<string, bool>(); //처음 얻는 장비인지 확인
+
+    [SerializeField] private int shopLevel = 1;
+    [SerializeField] private int shopSummonCount;
+
+    public SaveData()
+    {
+        InitDefaultData();
+    }
+
+    #region 재화
+    public double GetGem() => gem;
+    public void SetGem(double amount) => gem = Math.Max(0d, amount);
+
+    public double GetGold() => gold;
+    public void SetGold(double amount) => gold = Math.Max(0d, amount);
+    #endregion
+
+    #region 스테이지
     public int GetStageID() => currentStageID;
     public int GetWaveIndex() => currentWaveIndex;
+
     public void SetStageProgress(int stageID, int waveIndex)
     {
-        if (stageID < 101 || waveIndex < 1) return;
+        if (stageID < 101 || waveIndex < 1)
+        {
+            return;
+        }
 
         currentStageID = stageID;
         currentWaveIndex = waveIndex;
     }
     #endregion
 
-    #region Upgrade Data
-    // Key: ID, Value: Level
-    [SerializeField] private SerializationDictionary<string, int> UpgradeLevels = new SerializationDictionary<string, int>();
+    #region 장비
+    public int GetUpgradeLevel(string id)
+    {
+        return UpgradeLevels.TryGetValue(id, out int level) ? level : 0;
+    }
 
-    public int GetUpgradeLevel(string id) => UpgradeLevels.ContainsKey(id) ? UpgradeLevels[id] : 0;
-    public void SetUpgradeLevel(string id, int level) => UpgradeLevels[id] = level;
-    #endregion
+    public void SetUpgradeLevel(string id, int level)
+    {
+        UpgradeLevels[id] = Math.Max(0, level);
+    }
 
-    #region Equipment Data
-    // Key: 장비 ID, Value: 보유 개수
-    [SerializeField] private SerializationDictionary<string, int> OwnedEquipments = new SerializationDictionary<string, int>();
+    public bool IsNewItem(string id)
+    {
+        return NewItemStatus.TryGetValue(id, out bool isNew) && isNew;
+    }
 
-    // Key: 장비 타입(Weapon, Ring 등), Value: 장착 중인 장비 ID
-    [SerializeField] private SerializationDictionary<string, string> EquippedEquipments = new SerializationDictionary<string, string>();
-
-    // Key: ID, Value: 새로운 아이템인지 여부
-    [SerializeField] private SerializationDictionary<string, bool> NewItemStatus = new SerializationDictionary<string, bool>();
-
-    public bool IsNewItem(string id) => NewItemStatus.ContainsKey(id) ? NewItemStatus[id] : false;
     public bool IsUnlocked(string id)
     {
         return NewItemStatus.ContainsKey(id);
     }
+
     public void SetNewStatus(string id, bool isNew)
     {
         NewItemStatus[id] = isNew;
     }
 
-    public int GetEquipCount(string id) => OwnedEquipments.ContainsKey(id) ? OwnedEquipments[id] : 0;
+    public int GetEquipCount(string id)
+    {
+        return OwnedEquipments.TryGetValue(id, out int count) ? count : 0;
+    }
+
     public void AddEquipCount(string id, int count)
     {
-        OwnedEquipments[id] = GetEquipCount(id) + count;
+        SetEquipCount(id, GetEquipCount(id) + count);
     }
-    public void SetEquipCount(string id, int count) => OwnedEquipments[id] = count;
 
-    public string GetEquippedID(string type) => EquippedEquipments.ContainsKey(type) ? EquippedEquipments[type] : string.Empty;
+    public void SetEquipCount(string id, int count)
+    {
+        OwnedEquipments[id] = Math.Max(0, count);
+    }
 
-    public void SetEquippedID(string type, string id) => EquippedEquipments[type] = id;
+    public string GetEquippedID(string type)
+    {
+        return EquippedEquipments.TryGetValue(type, out string id) ? id : string.Empty;
+    }
 
+    public void SetEquippedID(string type, string id)
+    {
+        EquippedEquipments[type] = id ?? string.Empty;
+    }
     #endregion
 
-    #region Shop Data
-    [SerializeField] private int shopLevel = 1;
-    [SerializeField] private int shopSummonCount = 0;
+    #region 상점
 
     public int GetShopLevel() => shopLevel;
-    public void SetShopLevel(int level) => shopLevel = level;
+    public void SetShopLevel(int level) => shopLevel = Math.Max(1, level);
 
     public int GetShopSummonCount() => shopSummonCount;
-    public void AddShopSummonCount(int count)
-    {
-        shopSummonCount += count;
-    }
+    public void AddShopSummonCount(int count) => shopSummonCount = Math.Max(0, shopSummonCount + count);
     #endregion
 
-    public SaveData()
-    {
-        InitDefaultData();
-    }
     public void InitDefaultData()
     {
-        // 딕셔너리에 데이터가 없을 때만 기본값 세팅 (중복 방지)
-        if (UpgradeLevels.ToDictionary().Count == 0)
+        if (UpgradeLevels.Count > 0)
         {
-            //csv 파일 id랑 같아야함
-            UpgradeLevels["Atk"] = 1;      // 공격력
-            UpgradeLevels["Hp"] = 1;          // 체력
-            UpgradeLevels["AtkSpeed"] = 1;    // 공격속도
-            UpgradeLevels["CriticalChance"] = 1; // 치명타확률
-            UpgradeLevels["CriticalDamage"] = 1;   // 치명타데미지
-
-            gold = 100;
-
-            // 스테이지 기본 데이터 초기화
-            currentStageID = 101;
-            currentWaveIndex = 1;
-
-            // 장비 기본 데이터 초기화
-            OwnedEquipments["Weapon_1"] = 1;
-            NewItemStatus["Weapon_1"] = true;
-
-            // 기본 장착 설정
-            EquippedEquipments["Weapon"] = string.Empty;
-            EquippedEquipments["Ring"] = string.Empty;
-
-            //상점 기본 세팅
-            shopLevel = 1;
-            shopSummonCount = 0;
+            return;
         }
+
+        //초기값 설정
+
+        UpgradeLevels["Atk"] = 1;
+        UpgradeLevels["Hp"] = 1;
+        UpgradeLevels["AtkSpeed"] = 1;
+        UpgradeLevels["CriticalChance"] = 1;
+        UpgradeLevels["CriticalDamage"] = 1;
+
+        gold = 100;
+        currentStageID = 101;
+        currentWaveIndex = 1;
+
+        OwnedEquipments["Weapon_1"] = 1;
+        NewItemStatus["Weapon_1"] = true;
+
+        EquippedEquipments["Weapon"] = string.Empty;
+        EquippedEquipments["Ring"] = string.Empty;
+
+        shopLevel = 1;
+        shopSummonCount = 0;
     }
-
 }
-
-

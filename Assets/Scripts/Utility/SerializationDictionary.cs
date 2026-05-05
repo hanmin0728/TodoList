@@ -1,36 +1,41 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using static UnityEngine.GraphicsBuffer;
-using static UnityEngine.Rendering.DebugUI;
 
 [Serializable]
-public class SerializationDictionary<TKey, TValue> : ISerializationCallbackReceiver
+public sealed class SerializationDictionary<TKey, TValue> : ISerializationCallbackReceiver
 {
     [SerializeField] private List<TKey> keys = new List<TKey>();
     [SerializeField] private List<TValue> values = new List<TValue>();
 
-    // 실제 로직에서 사용할 딕셔너리 (직렬화는 안 됨)
-    private Dictionary<TKey, TValue> target = new Dictionary<TKey, TValue>();
+    private readonly Dictionary<TKey, TValue> target = new Dictionary<TKey, TValue>();
 
-    public Dictionary<TKey, TValue> ToDictionary() => target;
+    public int Count => target.Count;
 
-    // 딕셔너리처럼 쓰기 편하게 인덱서 구현
     public TValue this[TKey key]
     {
-        get => target.ContainsKey(key) ? target[key] : default;
+        get => target.TryGetValue(key, out TValue value) ? value : default;
         set => target[key] = value;
     }
 
-    public bool ContainsKey(TKey key) => target.ContainsKey(key);
+    public bool ContainsKey(TKey key)
+    {
+        return target.ContainsKey(key);
+    }
+
+    public bool TryGetValue(TKey key, out TValue value)
+    {
+        return target.TryGetValue(key, out value);
+    }
 
     // 저장하기 직전에 실행: Dictionary -> List
+
     public void OnBeforeSerialize()
     {
         keys.Clear();
         values.Clear();
-        foreach (var pair in target)
+
+        foreach (KeyValuePair<TKey, TValue> pair in target)
         {
             keys.Add(pair.Key);
             values.Add(pair.Value);
@@ -41,7 +46,9 @@ public class SerializationDictionary<TKey, TValue> : ISerializationCallbackRecei
     public void OnAfterDeserialize()
     {
         target.Clear();
-        for (int i = 0; i < Math.Min(keys.Count, values.Count); i++)
+
+        int count = Math.Min(keys.Count, values.Count);
+        for (int i = 0; i < count; i++)
         {
             target[keys[i]] = values[i];
         }
