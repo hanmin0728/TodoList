@@ -1,54 +1,50 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
-public class EnemyAttackState : BaseState<EnemyBase>
+public sealed class EnemyAttackState : BaseState<EnemyBase>
 {
+    private float attackCooldown;
+
     public EnemyAttackState(EnemyBase owner, StateMachine<EnemyBase> stateMachine) : base(owner, stateMachine)
     {
     }
 
-    private float attackTimer;
-
-    // °ø°Ý ÈÄ µô·¹ÀÌ »óÅÂÀÎÁö È®ÀÎ
-    private bool isWaitingForNextAttack;
-
     public override void Enter()
     {
-        isWaitingForNextAttack = false;
-        owner.PerformAttack();
-        attackTimer = owner.data.attackDelay;
+        owner.Rigid2D.linearVelocity = Vector2.zero; 
+        ExecuteAttack();
     }
 
     public override void Update()
     {
-        if (owner.IsAttackAnimationFinished && !isWaitingForNextAttack)
+        if (!owner.IsAttackAnimationFinished) return;
+
+        if (attackCooldown > 0f)
         {
-            isWaitingForNextAttack = true; // ´ë±â »óÅÂ ÀüÈ¯
-            owner.Anim.Play(EnemyAnimHash.isIdle, 0, 0f);
+            attackCooldown -= Time.deltaTime;
+            return; 
         }
 
-        if (owner.IsAttackAnimationFinished) //°ø°Ý ´ë±âÁß ÇÃ·¹ÀÌ¾î ¸Ö¾îÁú½Ã ÃßÀû
+        // 3. ì¿¨íƒ€ìž„ì´ ëë‚¬ë‹¤ë©´, í”Œë ˆì´ì–´ê°€ ë„ë§ê°”ëŠ”ì§€(ë„‰ë°±ëëŠ”ì§€) í™•ì¸
+        if (!owner.IsTargetInAttackRange())
         {
-            float distance = Vector2.Distance(owner.transform.position, GameManager.Instance.Player.transform.position);
-            if (distance > owner.data.attackRange)
-            {
-                stateMachine.ChangeState(owner.ChaseState);
-                return;
-            }
+            stateMachine.ChangeState(owner.ChaseState);
+            return;
         }
 
-        attackTimer -= Time.deltaTime;
-
-        if (attackTimer <= 0f && owner.IsAttackAnimationFinished)
-        {
-            isWaitingForNextAttack = false;
-            owner.PerformAttack();
-            attackTimer = owner.data.attackDelay; 
-        }
+        ExecuteAttack();
     }
-
 
     public override void Exit()
     {
-     
+    }
+
+    private void ExecuteAttack()
+    {
+        owner.PerformAttack();
+        attackCooldown = owner.Data.AttackDelay;
     }
 }
+
+
+
+

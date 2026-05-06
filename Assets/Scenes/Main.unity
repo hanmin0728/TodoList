@@ -238,6 +238,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea0501a3a5d641f42b699747df66a156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageManager
+  currentStageID: 101
+  currentWaveIndex: 1
+  spawnInterval: 0.2
   normalWaveDelay: 1.5
   bossClearDelay: 3
 --- !u!1 &17895102
@@ -3144,6 +3147,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShopUIManager
   shopLevelText: {fileID: 202444247}
   shopPopUp: {fileID: 1162172033}
+  oneSummonCost: 100
+  tenSummonCost: 1000
 --- !u!1 &226220364
 GameObject:
   m_ObjectHideFlags: 0
@@ -6975,36 +6980,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fd357c8160332c44941afa390d400e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveManager
-  CurrentData:
-    gold: 100
-    gem: 0
-    currentStageID: 101
-    currentWaveIndex: 1
-    UpgradeLevels:
-      keys:
-      - Atk
-      - Hp
-      - AtkSpeed
-      - CriticalChance
-      - CriticalDamage
-      values: 0100000001000000010000000100000001000000
-    OwnedEquipments:
-      keys:
-      - Weapon_1
-      values: 01000000
-    EquippedEquipments:
-      keys:
-      - Weapon
-      - Ring
-      values:
-      - 
-      - 
-    NewItemStatus:
-      keys:
-      - Weapon_1
-      values: 01
-    shopLevel: 1
-    shopSummonCount: 0
+  enableEditorHotkeys: 1
 --- !u!1 &490031919
 GameObject:
   m_ObjectHideFlags: 0
@@ -9072,7 +9048,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ae57d2c73c45a940973b7f6b6c1e6b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
-  activeEnemyCount: 0
 --- !u!4 &618962219
 Transform:
   m_ObjectHideFlags: 0
@@ -9428,7 +9403,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 049735ac0fb5a254a933658c07fb227d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CSVManager
-  _fileNames:
+  fileNames:
   - EnemyTable
   - StageTable
   - UpgradeTable
@@ -16523,6 +16498,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   background: {fileID: 1991411454}
   spawnBaseY: 1.6
+  spawnOffsetX: 2
+  spawnRandomYRange: {x: -0.2, y: 0.2}
 --- !u!1 &1315295438
 GameObject:
   m_ObjectHideFlags: 0
@@ -23297,7 +23274,6 @@ MonoBehaviour:
   ringToggle: {fileID: 923502719}
   weaponContent: {fileID: 5561087537612869171}
   ringContent: {fileID: 1800871423}
-  allSlots: []
   gearPopUp: {fileID: 3235833713449913882}
 --- !u!1 &1796242574
 GameObject:

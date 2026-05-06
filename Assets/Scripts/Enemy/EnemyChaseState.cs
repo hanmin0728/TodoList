@@ -1,8 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-public class EnemyChaseState : BaseState<EnemyBase>
+public sealed class EnemyChaseState : BaseState<EnemyBase>
 {
-    public EnemyChaseState(EnemyBase owner, StateMachine<EnemyBase> stateMachine) : base(owner, stateMachine){}
+    public EnemyChaseState(EnemyBase owner, StateMachine<EnemyBase> stateMachine) : base(owner, stateMachine)
+    {
+    }
 
     public override void Enter()
     {
@@ -11,22 +13,25 @@ public class EnemyChaseState : BaseState<EnemyBase>
 
     public override void Update()
     {
-        Vector2 playerPos = GameManager.Instance.Player.transform.position;
+        if (owner.TargetPlayer == null)
+        {
+            owner.Rigid2D.linearVelocity = Vector2.zero;
+            return;
+        }
 
-        float distance = Vector2.Distance(owner.transform.position, playerPos);
-
-        if (distance <= owner.data.attackRange)
+        if (owner.IsTargetInAttackRange())
         {
             owner.Rigid2D.linearVelocity = Vector2.zero;
             stateMachine.ChangeState(owner.AttackState);
             return;
         }
 
-        owner.Rigid2D.linearVelocity = new Vector2(-owner.data.moveSpeed, owner.Rigid2D.linearVelocity.y);
+        owner.Rigid2D.linearVelocity = new Vector2(-owner.Data.MoveSpeed, owner.Rigid2D.linearVelocity.y);
     }
 
     public override void Exit()
     {
-
     }
 }
+
+

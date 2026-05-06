@@ -1,7 +1,6 @@
-using System.Buffers;
-using UnityEngine;
+ï»¿using UnityEngine;
 
-public class MeleeEnemy : EnemyBase
+public sealed class MeleeEnemy : EnemyBase
 {
     public override void PerformAttack()
     {
@@ -11,18 +10,16 @@ public class MeleeEnemy : EnemyBase
 
     public override void OnEnemyAttackHit()
     {
-        float distance = Vector2.Distance(transform.position, GameManager.Instance.Player.transform.position);
+        if (TargetPlayer == null) 
+            return;
 
-        if (distance <= data.attackRange)
+        float distanceX = Mathf.Abs(transform.position.x - TargetPlayer.transform.position.x);
+
+        if (distanceX <= Data.AttackRange)
         {
-            GameManager.Instance.Player.TakeDamage(data.atk);
+            TargetPlayer.TakeDamage(Data.Atk);
         }
     }
-
-    public override void PlayHitEffect()
-    {
-        base.PlayHitEffect(); 
-        //±ÙÁ¢ °ø°Ý ¼Ò¸® Ãß°¡ 
-    }
-
 }
+
+

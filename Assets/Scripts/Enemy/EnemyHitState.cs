@@ -3,15 +3,15 @@ using UnityEngine;
 
 public class EnemyHitState : BaseState<EnemyBase>
 {
-    private float _hitStunDuration = 0.2f; 
-    private float _timer;
+    private readonly float hitStunDuration = 0.2f;
+    private float timer;
 
     public EnemyHitState(EnemyBase owner, StateMachine<EnemyBase> stateMachine) : base(owner, stateMachine)
     {
     }
     public override void Enter()
     {
-        _timer = _hitStunDuration;
+        timer = hitStunDuration;
         owner.Anim.Play(EnemyAnimHash.isHit, 0, 0f);
     }
 
@@ -22,8 +22,9 @@ public class EnemyHitState : BaseState<EnemyBase>
 
     public override void Update()
     {
-        _timer -= Time.deltaTime;
-        if (_timer <= 0)
+        timer -= Time.deltaTime;
+
+        if (timer <= 0)
         {
             stateMachine.ChangeState(owner.ChaseState);
         }

@@ -1,153 +1,165 @@
-using System.Collections;
+Ôªøusing System.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public abstract class EnemyBase : MonoBehaviour, IDamageable
 {
-    public StateMachine<EnemyBase> StateMachine { get; protected set; }
+    private static readonly WaitForSeconds HitFlashDelay = new WaitForSeconds(0.1f);
 
-    #region ªÛ≈¬ ∆–≈œ
+    private Coroutine flashCoroutine;
+
+    protected float currentHp;
+    protected bool isDead;
+
+    public StateMachine<EnemyBase> StateMachine { get; protected set; }
     public EnemyChaseState ChaseState { get; protected set; }
     public EnemyAttackState AttackState { get; protected set; }
     public EnemyHitState HitState { get; protected set; }
     public EnemyDieState DieState { get; protected set; }
-    #endregion
-
-    public EnemyData data;
-
-    protected float currentHp;
-    protected bool IsDead = false;
-
-    public float LastHitForce { get; private set; } 
 
     public Animator Anim { get; protected set; }
     public SpriteRenderer Sprite { get; protected set; }
     public Rigidbody2D Rigid2D { get; protected set; }
-
+    public Collider2D Collider2D { get; private set; }
     public Poolable Poolable { get; private set; }
+    public PlayerController TargetPlayer { get; private set; }
 
-    // ∞¯∞› æ÷¥œ∏ﬁ¿Ãº« Ω««‡ øœ∑· ø©∫Œ
+    public EnemyData Data { get; private set; }
     public bool IsAttackAnimationFinished { get; set; } = true;
 
-    public void Awake()
+    protected virtual void Awake()
     {
         Anim = GetComponent<Animator>();
         Rigid2D = GetComponent<Rigidbody2D>();
         Sprite = GetComponent<SpriteRenderer>();
+        Collider2D = GetComponent<Collider2D>();
         Poolable = GetComponent<Poolable>();
 
         StateMachine = new StateMachine<EnemyBase>();
-
         ChaseState = new EnemyChaseState(this, StateMachine);
         AttackState = new EnemyAttackState(this, StateMachine);
         HitState = new EnemyHitState(this, StateMachine);
         DieState = new EnemyDieState(this, StateMachine);
     }
+
     protected virtual void OnEnable()
     {
-        IsDead = false;
-        if (Sprite != null) Sprite.color = Color.white;
-    }
+        isDead = false;
+        IsAttackAnimationFinished = true;
 
-    public void Init(EnemyData newData)
-    {
-        data = newData;
-        currentHp = data.hp; // √÷¥Î √º∑¬ ¡§∫∏∏¶ ∞°¡ÆøÕ «ˆ¿Á √º∑¬ √ ±‚»≠
-        IsAttackAnimationFinished = false;
+        if (Sprite != null)
+        {
+            Sprite.color = Color.white;
+        }
 
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null) col.enabled = true;
-
-        StateMachine.Initialize(ChaseState);
+        if (Collider2D != null)
+        {
+            Collider2D.enabled = true;
+        }
     }
 
     protected virtual void Update()
     {
-        if (StateMachine.CurrentState != null)
-            StateMachine.CurrentState.Update();
+        StateMachine.Update();
     }
 
- 
+    public void SpawnInit(EnemyData newData)
+    {
+        Data = newData;
+        currentHp = Data.Hp;
+        isDead = false;
+        IsAttackAnimationFinished = true;
 
+        TargetPlayer = GameManager.Instance.Player;
+
+        if (Collider2D != null)
+        {
+            Collider2D.enabled = true;
+        }
+
+        StateMachine.Initialize(ChaseState);
+    }
 
     public virtual void OnDamage(float damage, float knockBackForce)
     {
-        if (IsDead) return;
+        if (isDead || damage <= 0f)
+        {
+            return;
+        }
+
         currentHp -= damage;
-        LastHitForce = knockBackForce;
-        
-        Rigid2D.linearVelocity = new Vector2(LastHitForce, 0);
+
         PlayHitEffect();
 
-        if (currentHp <= 0)
+        if (currentHp <= 0f)
         {
             Die();
+            return;
         }
-        else
-        {
-            StateMachine.ChangeState(HitState);
-        }
+
+        Rigid2D.linearVelocity = new Vector2(knockBackForce, 0f);
+        StateMachine.ChangeState(HitState);
     }
+
     public void Die()
     {
-        IsDead = true;
-        
-        CurrencyManager.Instance.AddGold(data.goldReward);
+        if (isDead) return;
+
+        isDead = true;
+        CurrencyManager.Instance.AddGold(Data.GoldReward);
         EnemySpawner.Instance.OnEnemyDeath();
 
-
-        StateMachine.ChangeState(DieState); // ¡◊¿Ω ªÛ≈¬∑Œ ¿¸»Ø 
+        StateMachine.ChangeState(DieState);
     }
 
     public virtual void PlayHitEffect()
     {
-        StartCoroutine(FlashCo());
-    }
+        if (flashCoroutine != null)
+        {
+            StopCoroutine(flashCoroutine);
+        }
 
+        flashCoroutine = StartCoroutine(FlashCo());
+    }
     private IEnumerator FlashCo()
     {
         if (Sprite == null) yield break;
 
         Color originalColor = Sprite.color;
-
-        // æÀ∆ƒ∞™ ¡∂¿˝
         Sprite.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
 
-        yield return new WaitForSeconds(0.1f);
+        yield return HitFlashDelay;
 
         Sprite.color = originalColor;
+        flashCoroutine = null;
+    }
+
+
+    public bool IsTargetInAttackRange()
+    {
+        if (TargetPlayer == null) return false;
+
+        float distanceX = Mathf.Abs(transform.position.x - TargetPlayer.transform.position.x);
+        return distanceX <= Data.AttackRange;
     }
 
     /// <summary>
-    /// ¿⁄Ωƒ ≈¨∑°Ω∫ø°º≠ ∫ª¿Œ∏∏¿« ∞¯∞› πÊΩƒ ±∏«ˆ
+    /// Í∞Å Ï†ÅÏùò Í≥µÍ≤© Î∞©Ïãù(Í∑ºÍ±∞Î¶¨/ÏõêÍ±∞Î¶¨)Ïóê Îî∞Îùº Íµ¨ÌòÑ
     /// </summary>
     public abstract void PerformAttack();
 
-    /// <summary>
-    /// æ÷¥œ∏ﬁ¿Ãº« ¿Ã∫•∆Æø°º≠ »£√‚
-    /// </summary>
     public virtual void OnEnemyAttackHit()
     {
     }
 
-    /// <summary>
-    /// æ÷¥œ∏ﬁ¿Ãº« ¿Ã∫•∆Æø°º≠ »£√‚
-    /// </summary>
     public void OnAttackSequenceFinished()
     {
         IsAttackAnimationFinished = true;
     }
 
-    /// <summary>
-    /// æ÷¥œ∏ﬁ¿Ãº« ¿Ã∫•∆Æø°º≠ »£√‚
-    /// </summary>
-    public void OnDieAnimationEnd()
+    public void OnDieAnimation()
     {
-        if (Poolable == null)
-        {
-            Poolable = GetComponent<Poolable>();
-        }
-
-        Poolable.Release();
+        Poolable?.Release();
     }
 }
+
+

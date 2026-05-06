@@ -129,8 +129,9 @@ public sealed class PlayerController : MonoBehaviour
             if (hit == null || !hit.TryGetComponent(out IDamageable enemy)) continue;
 
             (float finalDamage, bool isCritical) = CombatUtility.CalculateDamage(cachedDamage, cachedCriticalChance, cachedCriticalDamage);
-
-            enemy.OnDamage(finalDamage, data.KnockBackForce);
+           
+            Debug.Log(finalDamage);
+            enemy.OnDamage(3, data.KnockBackForce);
 
             TextType popupType = isCritical ? TextType.CriticalDamage : TextType.NormalDamage;
             FloatingTextPopUpManager.Instance.Show(finalDamage, hit.transform, popupType);

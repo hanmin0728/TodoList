@@ -1,22 +1,17 @@
-using UnityEngine;
-
-public class EnemyData
+ï»¿public sealed class EnemyData
 {
     public int EnemyId;
     public string Name;
-    public float hp;
-    public float atk;
-    public float def;
-    public float moveSpeed;
-    public float attackRange;
-    public float attackDelay;
-    public long goldReward;
+    public float Hp;
+    public float Atk;
+    public float Def;
+    public float MoveSpeed;
+    public float AttackRange;
+    public float AttackDelay;
+    public long GoldReward;
 }
 
 public enum EnemyType
 {
-    // CSVÀÇ ID ¼ıÀÚ¿Í ¶È°°ÀÌ ¸ÂÃã
-
-    golem = 1,        // °ñ·½ 
-    PaperMonster = 2, // ½ºÄÌ·¹Åæ
+    golem = 1,
 }
