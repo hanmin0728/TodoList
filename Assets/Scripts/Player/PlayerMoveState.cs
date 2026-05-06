@@ -1,11 +1,12 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-public class PlayerMoveState : BaseState<PlayerController>
+﻿public sealed class PlayerMoveState : BaseState<PlayerController>
 {
-    public PlayerMoveState(PlayerController owner, StateMachine<PlayerController> stateMachine) : base(owner, stateMachine) { }
+    public PlayerMoveState(PlayerController owner, StateMachine<PlayerController> stateMachine) : base(owner, stateMachine)
+    {
+    }
+
     public override void Enter()
     {
+        owner.Anim.Play(owner.AnimMoveHash, 0, 0f);
     }
 
     public override void Update()
@@ -13,13 +14,13 @@ public class PlayerMoveState : BaseState<PlayerController>
         if (owner.CheckEnemyInRange())
         {
             stateMachine.ChangeState(owner.AttackState);
+            return;
         }
 
-        GameManager.Instance.MoveBackground(owner.data.scrollSpeed);       
+        owner.MoveRoutine();
     }
 
     public override void Exit()
     {
     }
 }
-

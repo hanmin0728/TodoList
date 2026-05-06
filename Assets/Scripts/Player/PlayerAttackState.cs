@@ -1,43 +1,45 @@
-using UnityEngine;
+癤퓎sing UnityEngine;
 
-public class PlayerAttackState : BaseState<PlayerController>
+public sealed class PlayerAttackState : BaseState<PlayerController>
 {
-    public PlayerAttackState(PlayerController owner, StateMachine<PlayerController> stateMachine) : base(owner, stateMachine) { }
+    private float attackTimer;
 
-    private float _attackTimer;
+    public PlayerAttackState(PlayerController owner, StateMachine<PlayerController> stateMachine) : base(owner, stateMachine)
+    {
+    }
+
     public override void Enter()
     {
-        owner.IsAttackAnimationFinished = false; 
-        owner.Anim.Play(owner.AnimAttackHash, 0, 0f);
-
-        _attackTimer = owner.data.attackDelay;
+        PlayAttackAnimation();
+        attackTimer = owner.CurrentAttackDelay;
     }
 
     public override void Update()
     {
-        _attackTimer -= Time.deltaTime;
+        attackTimer -= Time.deltaTime;
 
-        if (_attackTimer <= 0 && owner.IsAttackAnimationFinished) //공격애니메이션 재생 완료 및 공격딜레이를 다 기다렸다면
+        if (attackTimer > 0f || !owner.IsAttackAnimationFinished)
         {
-            // 앞에 적이 여전히 있다면 다시 공격
-            if (owner.CheckEnemyInRange())
-            {
-                owner.IsAttackAnimationFinished = false;
-                owner.Anim.Play(owner.AnimAttackHash, 0, 0f);
-                _attackTimer = owner.data.attackDelay;
-            }
-            // 적이 없다면 다시 걷기 상태로
-            else
-            {
-                stateMachine.ChangeState(owner.MoveState);
-            }
+            return;
         }
-    }
 
+        if (owner.CheckEnemyInRange())
+        {
+            PlayAttackAnimation();
+            attackTimer = owner.CurrentAttackDelay;
+            return;
+        }
+
+        stateMachine.ChangeState(owner.MoveState);
+    }
 
     public override void Exit()
     {
     }
 
-
+    private void PlayAttackAnimation()
+    {
+        owner.IsAttackAnimationFinished = false;
+        owner.Anim.Play(owner.AnimAttackHash, 0, 0f);
+    }
 }

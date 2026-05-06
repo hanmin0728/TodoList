@@ -1,47 +1,74 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
-
-public class PlayerController : MonoBehaviour
+public sealed class PlayerController : MonoBehaviour
 {
-    public StateMachine<PlayerController> StateMachine { get; private set; }
+    private const string AttackStatId = "Atk";
+    private const string HpStatId = "Hp";
+    private const string AttackSpeedStatId = "AtkSpeed";
+    private const string CriticalChanceStatId = "CriticalChance";
+    private const string CriticalDamageStatId = "CriticalDamage";
 
+    private static readonly WaitForSeconds HitFlashDelay = new WaitForSeconds(0.1f);
+
+    [Header("Player Data")]
+    [SerializeField] private PlayerData data;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private int maxAttackHitCount = 16;
+
+    [Header("Combat Offsets")]
+    [Tooltip("í”Œë ˆì´ì–´ ì¤‘ì‹¬ì—ì„œ ê³µê²© íŒì •ì˜ ìœ„ì¹˜ë¥¼ ì¡°ì ˆí•©ë‹ˆë‹¤.")]
+    [SerializeField] private Vector2 attackOffset = new Vector2(0.5f, 0f);
+
+    private ContactFilter2D enemyContactFilter;
+    private Collider2D[] attackHitBuffer;
+    private Transform cachedTransform;
+    private Coroutine flashCoroutine;
+
+    // ì‹¤ì‹œê°„ ì—°ì‚°ì„ í”¼í•˜ê¸° ìœ„í•œ ìŠ¤íƒ¯ ìºì‹± ë³€ìˆ˜ë“¤
+    private float currentHp;
+    private float cachedMaxHp;
+    private float cachedDamage;
+    private float cachedCriticalChance;
+    private float cachedCriticalDamage;
+    private float cachedAttackDelay;
+
+    public StateMachine<PlayerController> StateMachine { get; private set; }
     public PlayerMoveState MoveState { get; private set; }
     public PlayerAttackState AttackState { get; private set; }
-
-    [Header("ÇÃ·¹ÀÌ¾î ±âº» µ¥ÀÌÅÍ ¼³Á¤")]
-    public PlayerData data;
-
     public Animator Anim { get; private set; }
     public SpriteRenderer SpriteRenderer { get; private set; }
-    
-    [SerializeField] private LayerMask enemyLayer;
-
+    public PlayerData Data => data;
+ 
     public int AnimAttackHash { get; private set; }
-
-    private float currentHp;
+    public int AnimMoveHash { get; private set; }
 
     public bool IsAttackAnimationFinished { get; set; } = true;
 
-    public float CurrentDamage => GetCalculatedStat("Atk", data.attackDamage);
-    public float MaxHp => GetCalculatedStat("Hp", data.hp);
-    public float CurrentCriticalChance => GetCalculatedStat("CriticalChance", 0f);
-    public float CurrentCriticalDamage => GetCalculatedStat("CriticalDamage", 2f);
-    public float CurrentAttackDelay => Mathf.Max(0.1f, data.attackDelay - GetCalculatedStat("AtkSpeed", 0f));
+    public float CurrentAttackDelay => cachedAttackDelay;
+
 
     private void Awake()
     {
-        StateMachine = new StateMachine<PlayerController>();
-
-        MoveState = new PlayerMoveState(this, StateMachine);
-        AttackState = new PlayerAttackState(this, StateMachine);
+        cachedTransform = transform;
 
         Anim = GetComponent<Animator>();
         SpriteRenderer = GetComponent<SpriteRenderer>();
 
-        GameManager.Instance.RegisterPlayer(this);
+        AnimAttackHash = Animator.StringToHash(data.AttackAnimationParam);
+        AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
 
-        AnimAttackHash = Animator.StringToHash(data.attacAnimationParam);
+        attackHitBuffer = new Collider2D[Mathf.Max(1, maxAttackHitCount)];
+
+        StateMachine = new StateMachine<PlayerController>();
+        MoveState = new PlayerMoveState(this, StateMachine);
+        AttackState = new PlayerAttackState(this, StateMachine);
+
+        enemyContactFilter = new ContactFilter2D();
+        enemyContactFilter.useLayerMask = true; 
+        enemyContactFilter.SetLayerMask(enemyLayer); 
+
+        GameManager.Instance.RegisterPlayer(this);
     }
 
     private void Start()
@@ -56,121 +83,122 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        StateMachine.Update();
+    }
+
+
     public void Init()
     {
         UpgradeManager.Instance.OnUpgradeDataLoaded -= Init;
-
-        currentHp = MaxHp;
-        
+        UpdateStatsCache(); 
+        currentHp = cachedMaxHp;
         StateMachine.Initialize(MoveState);
     }
 
-    private void Update()
+    public void UpdateStatsCache()
     {
-        if (StateMachine.CurrentState != null)
-        {
-            StateMachine.CurrentState.Update();
-        }
-    }
- 
-
-    private float GetCalculatedStat(string id, float fallbackBaseValue)
-    {
-        // 1. ¸Å´ÏÀú°¡ ¾ÆÁ÷ ÁØºñ ¾È µÆÀ¸¸é ±âº»°ª ¹İÈ¯ (¾ÈÀüÀåÄ¡)
-        if (!UpgradeManager.Instance.IsInitialized) return fallbackBaseValue;
-
-        // 2. CSV µ¥ÀÌÅÍ¸¦ µé°í ÀÖ´Â ¸Å´ÏÀú¿¡¼­ UpgradeData °¡Á®¿À±â 
-        UpgradeData upgradeData = UpgradeManager.Instance.GetUpgradeData(id);
-        if (upgradeData == null) return fallbackBaseValue;
-
-        // 3. SaveData¿¡¼­ ÇöÀç ·¹º§ °¡Á®¿À±â
-        int level = SaveManager.Instance.CurrentData.GetUpgradeLevel(id);
-
-        // 4. °ø½ÄÀ¸·Î ÃÖÁ¾ ´É·ÂÄ¡ °è»ê
-        return upgradeData.GetValue(level);
+        cachedMaxHp = GetCalculatedStat(HpStatId, data.Hp);
+        cachedDamage = GetCalculatedStat(AttackStatId, data.AttackDamage);
+        cachedCriticalChance = GetCalculatedStat(CriticalChanceStatId, 0f);
+        cachedCriticalDamage = GetCalculatedStat(CriticalDamageStatId, 2f);
+        cachedAttackDelay = Mathf.Max(0.1f, data.AttackDelay - GetCalculatedStat(AttackSpeedStatId, 0f));
     }
 
-    /// <summary>
-    /// ÇÃ·¹ÀÌ¾î ¾Õ¿¡ ÀûÀÌ ÀÖ´ÂÁö Ã¼Å© ÈÄ bool °ª ¹İÈ¯
-    /// </summary>
+
     public bool CheckEnemyInRange()
     {
-        Vector2 checkPos = (Vector2)transform.position + new Vector2(0.5f, 0);
-
-        Collider2D hit = Physics2D.OverlapCircle(checkPos, data.attackRange, enemyLayer);
-        if (hit != null)
-        {
-            //Debug.Log("°¨ÁöµÈ Àû ÀÌ¸§: " + hit.gameObject.name);
-        }
-        return hit != null; 
+        Collider2D hit = Physics2D.OverlapCircle(GetAttackCheckPosition(), data.AttackRange, enemyLayer);
+        return hit != null;
     }
 
-    /// <summary>
-    /// °ø°İ ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı ¿Ï·á½Ã ¾Ö´Ï¸ŞÀÌ¼Ç ÀÌº¥Æ®¿¡¼­ È£Ãâ 
-    /// /// </summary>
     public void OnAttackSequenceFinished()
     {
         IsAttackAnimationFinished = true;
-    } 
+    }
 
-    /// <summary>
-    /// ¾Ö´Ï¸ŞÀÌ¼Ç ÀÌº¥Æ®¿¡¼­ È£Ãâ ½ÇÁ¦ °ø°İ ÇÔ¼ö
-    /// </summary>
     public void OnAttackHit()
     {
-        Vector2 checkPos = (Vector2)transform.position + new Vector2(0.5f, 0);
+        int hitCount = Physics2D.OverlapCircle(GetAttackCheckPosition(), data.AttackRange, enemyContactFilter, attackHitBuffer);
 
-        // ¹üÀ§ ³»ÀÇ ¸ğµç Àû °¨Áö 
-        Collider2D[] hits = Physics2D.OverlapCircleAll(checkPos, data.attackRange, enemyLayer);
-
-        foreach (var hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
-            if (hit.TryGetComponent(out IDamageable enemy))
-            {
-                var result = CombatUtility.CalculateDamage(CurrentDamage, CurrentCriticalChance);
-                enemy.OnDamage(result.damage, data.knockBackForce);
+            Collider2D hit = attackHitBuffer[i];
 
-                TextType popupType = result.isCritical ? TextType.CriticalDamage : TextType.NormalDamage;
-                FloatingTextPopUpManager.Instance.Show(result.damage.ToString("F0"), hit.transform, popupType);
-            }
+            if (hit == null || !hit.TryGetComponent(out IDamageable enemy)) continue;
+
+            (float finalDamage, bool isCritical) = CombatUtility.CalculateDamage(cachedDamage, cachedCriticalChance, cachedCriticalDamage);
+
+            enemy.OnDamage(finalDamage, data.KnockBackForce);
+
+            TextType popupType = isCritical ? TextType.CriticalDamage : TextType.NormalDamage;
+            FloatingTextPopUpManager.Instance.Show(finalDamage, hit.transform, popupType);
         }
     }
 
-
+  
     public void TakeDamage(float damage)
     {
+        if (damage <= 0f)
+            return;
+
         currentHp -= damage;
 
-        StartCoroutine(PlayerFlashCo());
+        if (flashCoroutine != null)
+        {
+            StopCoroutine(flashCoroutine);
+        }
 
-        if (currentHp <= 0)
+
+        if (currentHp <= 0f)
         {
             Die();
         }
+
+        flashCoroutine = StartCoroutine(PlayerFlashCo());
     }
 
+    public void MoveRoutine()
+    {
+        GameManager.Instance.MoveBackground(data.ScrollSpeed);
+    }
 
-    /// <summary>
-    /// ÇÇ°İ½Ã °£´ÜÇÑ ÀÌÆåÆ®
-    /// </summary>
+    private float GetCalculatedStat(string id, float fallbackBaseValue)
+    {
+        if (!UpgradeManager.Instance.IsInitialized)
+        {
+            return fallbackBaseValue;
+        }
+
+        UpgradeData upgradeData = UpgradeManager.Instance.GetUpgradeData(id);
+        if (upgradeData == null)
+        {
+            return fallbackBaseValue;
+        }
+
+        int level = SaveManager.Instance.CurrentData.GetUpgradeLevel(id);
+        return upgradeData.GetValue(level);
+    }
+
+    private Vector2 GetAttackCheckPosition()
+    {
+        return (Vector2)cachedTransform.position + attackOffset;
+    }
+
     private IEnumerator PlayerFlashCo()
     {
         Color originalColor = SpriteRenderer.color;
 
         SpriteRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.1f);
+        yield return HitFlashDelay;
         SpriteRenderer.color = originalColor;
+        flashCoroutine = null;
     }
 
     private void Die()
     {
-        Debug.Log("ÇÃ·¹ÀÌ¾î »ç¸Á"); 
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, data.attackRange);
+        Debug.Log("[PlayerController] Player died.");
     }
 
 }
