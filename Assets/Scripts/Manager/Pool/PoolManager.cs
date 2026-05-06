@@ -1,39 +1,95 @@
-using System.Collections.Generic;
-using Unity.VisualScripting;
+癤퓎sing System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-public class PoolManager : Singleton<PoolManager>
+
+public sealed class PoolManager : Singleton<PoolManager>
 {
-    private Dictionary<GameObject, IObjectPool<GameObject>> pools = new Dictionary<GameObject, IObjectPool<GameObject>>();
-   
-    public GameObject Spawn(GameObject prefab, Vector2 position, Quaternion rotation)
+    [Header("Pool Settings")]
+    [SerializeField] private int defaultCapacity = 20;
+    [SerializeField] private int maxSize = 200;
+
+    private readonly Dictionary<GameObject, IObjectPool<GameObject>> poolsByPrefab = new Dictionary<GameObject, IObjectPool<GameObject>>();
+
+    private readonly Dictionary<GameObject, Transform> parentsByPrefab = new Dictionary<GameObject, Transform>();
+
+
+    public GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
     {
-        // 해당 프리팹의 풀이 없다면 새로 제작
-        if (!pools.ContainsKey(prefab))
+        if (prefab == null) return null;
+
+        if (!poolsByPrefab.TryGetValue(prefab, out IObjectPool<GameObject> pool))
         {
-            pools[prefab] = new ObjectPool<GameObject>(
-                createFunc: () =>
-                {
-                    GameObject obj = Instantiate(prefab);
-
-                    // 생성된 오브젝트에 Poolable 붙이기
-                    Poolable poolable = obj.GetComponent<Poolable>();
-                    if (poolable == null) poolable = obj.AddComponent<Poolable>();
-
-                    poolable.Pool = pools[prefab]; // 자신이 돌아갈 집(Pool)을 기억하게 함
-                    return obj;
-                },
-                actionOnGet: obj => obj.SetActive(true),
-                actionOnRelease: obj => obj.SetActive(false),
-                actionOnDestroy: obj => Destroy(obj),
-                collectionCheck: true,
-                defaultCapacity: 10,
-                maxSize: 100 // 최대 개수는 프로젝트에 맞게 조절 가능
-            );
+            pool = CreatePool(prefab);
+            poolsByPrefab.Add(prefab, pool);
         }
-        GameObject spawnedObj = pools[prefab].Get();
-        spawnedObj.transform.SetPositionAndRotation(position, rotation);
 
-        return spawnedObj;
+        GameObject obj = pool.Get();
+
+        obj.transform.SetPositionAndRotation(position, rotation);
+        if (parent != null) obj.transform.SetParent(parent);
+
+        if (obj.TryGetComponent(out Poolable poolable))
+        {
+            poolable.OnSpawn();
+        }
+
+        return obj;
+    }
+
+    private IObjectPool<GameObject> CreatePool(GameObject prefab)
+    {
+        GameObject root = new GameObject($"Pool_{prefab.name}");
+        root.transform.SetParent(transform);
+        parentsByPrefab.Add(prefab, root.transform);
+
+        return new ObjectPool<GameObject>(
+            createFunc: () => CreatePooledObject(prefab),
+            actionOnGet: OnGetFromPool,
+            actionOnRelease: OnReleaseToPool,
+            actionOnDestroy: OnDestroyPoolObject,
+            collectionCheck: true,
+            defaultCapacity: defaultCapacity,
+            maxSize: maxSize);
+    }
+
+    private GameObject CreatePooledObject(GameObject prefab)
+    {
+        GameObject obj = Instantiate(prefab, parentsByPrefab[prefab]); 
+
+        if (!obj.TryGetComponent(out Poolable poolable))
+        {
+            poolable = obj.AddComponent<Poolable>();
+        }
+
+        poolable.Pool = poolsByPrefab[prefab];
+        return obj;
+    }
+
+    private void OnGetFromPool(GameObject obj) => obj.SetActive(true);
+
+    private void OnReleaseToPool(GameObject obj)
+    {
+        if (obj.TryGetComponent(out Poolable poolable))
+        {
+            poolable.OnDespawn();
+        }
+
+        GameObject prefabKey = FindPrefabKeyByObject(obj);
+        if (prefabKey != null) obj.transform.SetParent(parentsByPrefab[prefabKey]);
+
+        obj.SetActive(false);
+    }
+
+    private void OnDestroyPoolObject(GameObject obj) => Destroy(obj);
+
+    private GameObject FindPrefabKeyByObject(GameObject obj)
+    {
+        if (!obj.TryGetComponent(out Poolable p) || p.Pool == null) return null;
+
+        foreach (var pair in poolsByPrefab)
+        {
+            if (pair.Value == p.Pool) return pair.Key;
+        }
+        return null;
     }
 }

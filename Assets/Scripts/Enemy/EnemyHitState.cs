@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class EnemyHitState : BaseState<EnemyBase>
 {
-    private readonly float hitStunDuration = 0.2f;
+    private readonly float hitStunDuration = 0.3f;
     private float timer;
 
     public EnemyHitState(EnemyBase owner, StateMachine<EnemyBase> stateMachine) : base(owner, stateMachine)

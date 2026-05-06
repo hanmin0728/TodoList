@@ -28,8 +28,7 @@ public sealed class SerializationDictionary<TKey, TValue> : ISerializationCallba
         return target.TryGetValue(key, out value);
     }
 
-    // 저장하기 직전에 실행: Dictionary -> List
-
+    // 유니티가 세이브하거나 인스펙터를 그리기 직전에 실행: Dictionary -> List
     public void OnBeforeSerialize()
     {
         keys.Clear();
@@ -42,7 +41,7 @@ public sealed class SerializationDictionary<TKey, TValue> : ISerializationCallba
         }
     }
 
-    // 불러온 직후에 실행: List -> Dictionary
+    // 유니티가 로딩을 끝냈거나 인스펙터 값을 수정했을 때 직후 실행: List -> Dictionary
     public void OnAfterDeserialize()
     {
         target.Clear();

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public abstract class EnemyBase : MonoBehaviour, IDamageable
+public abstract class EnemyBase : Poolable, IDamageable
 {
     private static readonly WaitForSeconds HitFlashDelay = new WaitForSeconds(0.1f);
 
@@ -66,17 +66,20 @@ public abstract class EnemyBase : MonoBehaviour, IDamageable
     {
         Data = newData;
         currentHp = Data.Hp;
+        
+        TargetPlayer = GameManager.Instance.Player;
+        StateMachine.Initialize(ChaseState);
+    }
+
+    public override void OnSpawn()
+    {
         isDead = false;
         IsAttackAnimationFinished = true;
-
-        TargetPlayer = GameManager.Instance.Player;
-
+        
         if (Collider2D != null)
         {
             Collider2D.enabled = true;
         }
-
-        StateMachine.Initialize(ChaseState);
     }
 
     public virtual void OnDamage(float damage, float knockBackForce)

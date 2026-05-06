@@ -1,85 +1,159 @@
+癤퓎sing System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemySpawner : Singleton<EnemySpawner>
+public sealed class EnemySpawner : Singleton<EnemySpawner>
 {
-    // 성능 최적화를 위한 프리팹 캐싱 
-    private Dictionary<int, GameObject> prefabCache = new Dictionary<int, GameObject>();
-    
-    public int activeEnemyCount = 0;
-    
+    private readonly Dictionary<int, GameObject> prefabCacheById = new Dictionary<int, GameObject>();
+    private readonly Dictionary<int, EnemyData> enemyDataById = new Dictionary<int, EnemyData>();
+
+    private int activeEnemyCount;
+    private bool isEnemyDataLoaded;
+
+    private void Start()
+    {
+        if (CSVManager.Instance.IsInitialized)
+        {
+            LoadEnemyData();
+        }
+        else
+        {
+            CSVManager.Instance.OnLoadingComplete += LoadEnemyData;
+        }
+    }
+
     public void SpawnEnemy(int id)
     {
-        var row = CSVManager.Instance.GetDataById("EnemyTable", "EnemyID", id.ToString());
-
-        if (row == null)
+        if (!EnsureEnemyDataLoaded())
         {
-            Debug.LogError($"EnemyID {id}의 데이터를 찾을 수 없습니다.");
+            Debug.LogWarning("[EnemySpawner] Enemy data is not ready yet.");
             return;
         }
- 
-        GameObject targetPrefab = GetEnemyPrefab(id);
 
-        if (targetPrefab == null) 
-            return;
-
-        EnemyData newEnemyData = new EnemyData();
-        newEnemyData.EnemyId = int.Parse(row["EnemyID"].ToString());
-        newEnemyData.Name = row["Name"].ToString();
-        newEnemyData.hp = float.Parse(row["HP"].ToString());
-        newEnemyData.atk = float.Parse(row["ATK"].ToString());
-        newEnemyData.def = float.Parse(row["DEF"].ToString());
-        newEnemyData.moveSpeed = float.Parse(row["MoveSpeed"].ToString());
-        newEnemyData.attackRange = float.Parse(row["AttackRange"].ToString());
-        newEnemyData.attackDelay = float.Parse(row["AttackDelay"].ToString());
-        newEnemyData.goldReward = long.Parse(row["GoldReward"].ToString());
-
-        Vector2 spawnPos = GameManager.Instance.GetSpawnPosition();
-        GameObject obj = PoolManager.Instance.Spawn(targetPrefab, spawnPos, Quaternion.identity);
-        obj.GetComponent<EnemyBase>().Init(newEnemyData);
-
-        activeEnemyCount++;
-    }
-  
-    /// <summary>
-    /// ID를 기반으로 프리팹을 로드하고 캐싱하는 함수
-    /// </summary>
-    private GameObject GetEnemyPrefab(int id)
-    {
-        // 아직 캐시에 없다면 Resources 폴더에서 불러옴
-        if (!prefabCache.ContainsKey(id))
+        if (!enemyDataById.TryGetValue(id, out EnemyData enemyData))
         {
-            EnemyType enemyType = (EnemyType)id;
-            string prefabName = enemyType.ToString();
+            Debug.LogError($"[EnemySpawner] Enemy data is missing. ID: {id}");
+            return;
+        }
 
-            string path = $"Enemies/{prefabName}";
+        GameObject targetPrefab = GetEnemyPrefab(id);
+        if (targetPrefab == null)
+        {
+            return;
+        }
 
-            GameObject loadedPrefab = Resources.Load<GameObject>(path);
+        Vector2 spawnPosition = GameManager.Instance.EnemySpawnPosition();
+        GameObject spawnedObject = PoolManager.Instance.Spawn(targetPrefab, spawnPosition, Quaternion.identity);
 
-            if (loadedPrefab == null)
+        if (!spawnedObject.TryGetComponent(out EnemyBase enemy))
+        {
+            Debug.LogError($"[EnemySpawner] Enemy prefab does not have EnemyBase. Prefab: {targetPrefab.name}");
+            Poolable poolable = spawnedObject.GetComponent<Poolable>();
+            if (poolable != null)
             {
-                Debug.LogError($"경로에 프리팹이 없습니다! : Resources/{path} (ID: {id}가 Enum에 정의되어 있는지 확인하세요!)");
-                return null;
+                poolable.Release();
             }
 
-            // 찾은 프리팹을 딕셔너리에 저장
-            prefabCache[id] = loadedPrefab;
+            return;
         }
 
-        return prefabCache[id];
+        enemy.SpawnInit(enemyData);
+        activeEnemyCount++;
     }
 
     public int GetActiveEnemyCount()
     {
         return activeEnemyCount;
     }
+
     public void OnEnemyDeath()
     {
-        activeEnemyCount--;
+        activeEnemyCount = Mathf.Max(0, activeEnemyCount - 1);
+    }
 
-        if (activeEnemyCount <= 0)
+    private bool EnsureEnemyDataLoaded()
+    {
+        if (isEnemyDataLoaded)
         {
-            activeEnemyCount = 0;
+            return true;
         }
+
+        if (!CSVManager.Instance.IsInitialized)
+        {
+            return false;
+        }
+
+        LoadEnemyData();
+        return isEnemyDataLoaded;
+    }
+
+    private void LoadEnemyData()
+    {
+        CSVManager.Instance.OnLoadingComplete -= LoadEnemyData;
+        enemyDataById.Clear();
+
+        List<Dictionary<string, object>> table = CSVManager.Instance.GetTable("EnemyTable");
+        if (table == null)
+        {
+            Debug.LogError("[EnemySpawner] EnemyTable is missing. Check CSVManager file names.");
+            return;
+        }
+
+        foreach (Dictionary<string, object> row in table)
+        {
+            try
+            {
+                EnemyData data = ParseEnemyData(row);
+                if (!enemyDataById.ContainsKey(data.EnemyId))
+                {
+                    enemyDataById.Add(data.EnemyId, data);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[EnemySpawner] Failed to parse enemy data. ID: {row["EnemyID"]}, Error: {e.Message}");
+            }
+        }
+
+        isEnemyDataLoaded = true;
+    }
+
+    private static EnemyData ParseEnemyData(Dictionary<string, object> row)
+    {
+        return new EnemyData
+        {
+            EnemyId = int.Parse(row["EnemyID"].ToString()),
+            Name = row["Name"].ToString(),
+            Hp = float.Parse(row["HP"].ToString()),
+            Atk = float.Parse(row["ATK"].ToString()),
+            Def = float.Parse(row["DEF"].ToString()),
+            MoveSpeed = float.Parse(row["MoveSpeed"].ToString()),
+            AttackRange = float.Parse(row["AttackRange"].ToString()),
+            AttackDelay = float.Parse(row["AttackDelay"].ToString()),
+            GoldReward = long.Parse(row["GoldReward"].ToString())
+        };
+    }
+
+    private GameObject GetEnemyPrefab(int id)
+    {
+        if (prefabCacheById.TryGetValue(id, out GameObject cachedPrefab))
+        {
+            return cachedPrefab;
+        }
+
+        EnemyType enemyType = (EnemyType)id;
+        string path = $"Enemies/{enemyType}";
+        GameObject loadedPrefab = Resources.Load<GameObject>(path);
+
+        if (loadedPrefab == null)
+        {
+            Debug.LogError($"[EnemySpawner] Enemy prefab is missing. Resources/{path}, ID: {id}");
+            return null;
+        }
+
+        prefabCacheById.Add(id, loadedPrefab);
+        return loadedPrefab;
     }
 }
+
+

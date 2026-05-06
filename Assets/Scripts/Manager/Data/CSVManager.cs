@@ -6,11 +6,11 @@ using UnityEngine.Serialization;
 public sealed class CSVManager : Singleton<CSVManager>
 {
     [Header("CSV file names in Resources")]
-    [FormerlySerializedAs("_fileNames")]
     [SerializeField] private List<string> fileNames = new List<string>();
 
-    private readonly Dictionary<string, List<Dictionary<string, object>>> tablesByName = new Dictionary<string, List<Dictionary<string, object>>>();
-
+    private readonly Dictionary<string, List<Dictionary<string, object>>> tablesByName = new Dictionary<string, List<Dictionary<string, object>>>(); 
+    
+    
     public bool IsInitialized { get; private set; }
     public event Action OnLoadingComplete;
 
@@ -33,26 +33,6 @@ public sealed class CSVManager : Singleton<CSVManager>
         }
 
         Debug.LogError($"[CSVManager] Table is missing. Name: {fileName}");
-        return null;
-    }
-
-    public Dictionary<string, object> GetDataById(string fileName, string idColumnName, string idValue)
-    {
-        List<Dictionary<string, object>> table = GetTable(fileName);
-        if (table == null)
-        {
-            return null;
-        }
-
-        for (int i = 0; i < table.Count; i++)
-        {
-            Dictionary<string, object> row = table[i];
-            if (row.TryGetValue(idColumnName, out object value) && value.ToString() == idValue)
-            {
-                return row;
-            }
-        }
-
         return null;
     }
 
