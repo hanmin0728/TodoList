@@ -34899,6 +34899,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4640855681283584676, guid: 34c9ed2019e4bf043bb102ae64d08090, type: 3}
+      propertyPath: attackOffset.x
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 6188515566304664266, guid: 34c9ed2019e4bf043bb102ae64d08090, type: 3}
       propertyPath: m_Name
       value: Player

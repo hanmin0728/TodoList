@@ -1,4 +1,6 @@
-﻿public sealed class PlayerMoveState : BaseState<PlayerController>
+﻿using UnityEngine;
+
+public sealed class PlayerMoveState : BaseState<PlayerController>
 {
     public PlayerMoveState(PlayerController owner, StateMachine<PlayerController> stateMachine) : base(owner, stateMachine)
     {

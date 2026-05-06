@@ -18,4 +18,5 @@ MonoBehaviour:
   attackDamage: 3
   attackDelay: 3
   knockBackForce: 3
-  attacAnimationParam: PlayerAttack
+  attackAnimationParam: PlayerAttack
+  moveAnimationParam: PlayerMove

@@ -17,6 +17,7 @@ public sealed class PlayerData : ScriptableObject
     [Header("Animation")]
     [SerializeField] private string attackAnimationParam = "PlayerAttack";
     [SerializeField] private string moveAnimationParam = "PlayerMove";
+    [SerializeField] private string idleAnimationParam = "PlayerIdle";
 
     public float ScrollSpeed => scrollSpeed;
     public float Hp => hp;
@@ -26,4 +27,5 @@ public sealed class PlayerData : ScriptableObject
     public float KnockBackForce => knockBackForce;
     public string AttackAnimationParam => attackAnimationParam;
     public string MoveAnimationParam => moveAnimationParam;
+    public string IdleAnimationParam => idleAnimationParam;
 }

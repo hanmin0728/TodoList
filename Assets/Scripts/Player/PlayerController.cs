@@ -17,13 +17,13 @@ public sealed class PlayerController : MonoBehaviour
     [SerializeField] private int maxAttackHitCount = 16;
 
     [Header("Combat Offsets")]
-    [Tooltip("플레이어 중심에서 공격 판정의 위치를 조절합니다.")]
     [SerializeField] private Vector2 attackOffset = new Vector2(0.5f, 0f);
 
     private ContactFilter2D enemyContactFilter;
     private Collider2D[] attackHitBuffer;
     private Transform cachedTransform;
     private Coroutine flashCoroutine;
+    private Color defaultColor;
 
     // 실시간 연산을 피하기 위한 스탯 캐싱 변수들
     private float currentHp;
@@ -42,7 +42,7 @@ public sealed class PlayerController : MonoBehaviour
  
     public int AnimAttackHash { get; private set; }
     public int AnimMoveHash { get; private set; }
-
+    public int AnimIdleHash { get; private set; }
     public bool IsAttackAnimationFinished { get; set; } = true;
 
     public float CurrentAttackDelay => cachedAttackDelay;
@@ -57,6 +57,8 @@ public sealed class PlayerController : MonoBehaviour
 
         AnimAttackHash = Animator.StringToHash(data.AttackAnimationParam);
         AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
+        AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
+        AnimIdleHash = Animator.StringToHash(data.IdleAnimationParam); 
 
         attackHitBuffer = new Collider2D[Mathf.Max(1, maxAttackHitCount)];
 
@@ -66,8 +68,10 @@ public sealed class PlayerController : MonoBehaviour
 
         enemyContactFilter = new ContactFilter2D();
         enemyContactFilter.useLayerMask = true; 
-        enemyContactFilter.SetLayerMask(enemyLayer); 
+        enemyContactFilter.SetLayerMask(enemyLayer);
 
+        defaultColor = SpriteRenderer.color;
+        
         GameManager.Instance.RegisterPlayer(this);
     }
 
@@ -151,7 +155,6 @@ public sealed class PlayerController : MonoBehaviour
             StopCoroutine(flashCoroutine);
         }
 
-
         if (currentHp <= 0f)
         {
             Die();
@@ -189,11 +192,10 @@ public sealed class PlayerController : MonoBehaviour
 
     private IEnumerator PlayerFlashCo()
     {
-        Color originalColor = SpriteRenderer.color;
-
         SpriteRenderer.color = Color.red;
         yield return HitFlashDelay;
-        SpriteRenderer.color = originalColor;
+        SpriteRenderer.color = defaultColor;
+
         flashCoroutine = null;
     }
 
@@ -201,5 +203,16 @@ public sealed class PlayerController : MonoBehaviour
     {
         Debug.Log("[PlayerController] Player died.");
     }
+    private void OnDrawGizmosSelected()
+    {
+        if (data == null) return;
 
+        Gizmos.color = Color.red;
+
+        Vector2 checkPosition = Application.isPlaying
+            ? GetAttackCheckPosition()
+            : (Vector2)transform.position + attackOffset;
+
+        Gizmos.DrawWireSphere(checkPosition, data.AttackRange);
+    }
 }
