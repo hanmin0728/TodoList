@@ -2,64 +2,59 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class ShopUIManager : MonoBehaviour
+public sealed class ShopUIManager : MonoBehaviour
 {
-    public TextMeshProUGUI shopLevelText;
-    public ShopPopUp shopPopUp;
-    private int oneSummonCost = 100;
-    private int tenSummonCost = 1000;
+    [SerializeField] private TextMeshProUGUI shopLevelText;
+    [SerializeField] private ShopPopUp shopPopUp;
+    [SerializeField] private int oneSummonCost = 100;
+    [SerializeField] private int tenSummonCost = 1000;
+
     private void Start()
     {
         UpdateShopLevelUI();
     }
 
-    private void ExecuteSummon(string category, int count, int cost)
-    {
-        if (SaveManager.Instance.CurrentData.GetGem() < cost)
-        {
-            Debug.Log("다이아가 부족합니다!");
-            // TODO: "재화가 부족합니다" 안내 팝업 
-            return;
-        }
-
-        double gem = SaveManager.Instance.CurrentData.GetGem();
-        SaveManager.Instance.CurrentData.SetGem(gem - cost);
-
-        //소환 로직 실행
-        List<string> results = ShopManager.Instance.SummonItems(category, count);
-
-        //UI 갱신
-        UpdateShopLevelUI();
-
-        //연출 
-        shopPopUp.ShowPopup(results);
-    }
-
- 
     public void OnClickWeaponSummon()
     {
-        ExecuteSummon("Weapon", 1, oneSummonCost);
+        ExecuteSummon(EquipmentType.Weapon, 1, oneSummonCost);
     }
 
     public void OnClickWeaponSummonTen()
     {
-        ExecuteSummon("Weapon", 10, tenSummonCost);
+        ExecuteSummon(EquipmentType.Weapon, 10, tenSummonCost);
     }
 
     public void OnClickRingSummon()
     {
-        ExecuteSummon("Ring", 1, oneSummonCost);
+        ExecuteSummon(EquipmentType.Ring, 1, oneSummonCost);
     }
 
     public void OnClickRingSummonTen()
     {
-        ExecuteSummon("Ring", 10, tenSummonCost);
+        ExecuteSummon(EquipmentType.Ring, 10, tenSummonCost);
     }
-
 
     public void UpdateShopLevelUI()
     {
         int currentLevel = SaveManager.Instance.CurrentData.GetShopLevel();
-        shopLevelText.text = $"Store Level {currentLevel}";
+        shopLevelText.SetText("Store Level {0}", currentLevel);
+    }
+
+    private void ExecuteSummon(EquipmentType equipmentType, int count, int cost)
+    {
+        if (!ShopManager.Instance.CanSummonEquipment())
+        {
+            Debug.LogWarning("[ShopUIManager] Shop is not ready yet.");
+            return;
+        }
+
+        if (!CurrencyManager.Instance.TrySpendGem(cost))
+        {
+            return;
+        }
+
+        List<string> results = ShopManager.Instance.SummonItems(equipmentType, count);
+        UpdateShopLevelUI();
+        shopPopUp.ShowPopup(results);
     }
 }

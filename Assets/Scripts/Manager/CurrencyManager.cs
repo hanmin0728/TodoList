@@ -1,40 +1,81 @@
 using System;
 using UnityEngine;
 
-public class CurrencyManager : Singleton<CurrencyManager>
+public sealed class CurrencyManager : Singleton<CurrencyManager>
 {
-    // 골드가 변할 때마다 UI나 다른 스크립트에게 알려주는 Event
-    public Action<double> OnGoldChanged;
+    public event Action<double> OnGoldChanged;
+    public event Action<double> OnGemChanged;
 
-    /// <summary>
-    /// 골드 획득시 호출
-    /// </summary>
-    public void AddGold(long amount)
+    public void AddGold(double amount)
     {
-        double currentGold = SaveManager.Instance.CurrentData.GetGold();
-        double nextGold = currentGold + amount;
-        SaveManager.Instance.CurrentData.SetGold(nextGold);
+        if (amount <= 0)
+        {
+            return;
+        }
 
+        SaveData saveData = SaveManager.Instance.CurrentData;
+        double nextGold = saveData.GetGold() + amount;
+        saveData.SetGold(nextGold);
 
         OnGoldChanged?.Invoke(nextGold);
     }
-    
-    public  bool TryUpgrade(double amount)
+
+    public void AddGem(double amount)
     {
-        double currentGold = SaveManager.Instance.CurrentData.GetGold();
-
-        if (currentGold >= amount)
+        if (amount <= 0)
         {
-            double nextGold = currentGold - amount;
-            SaveManager.Instance.CurrentData.SetGold(nextGold);
+            return;
+        }
 
-            OnGoldChanged?.Invoke(nextGold);
+        SaveData saveData = SaveManager.Instance.CurrentData;
+        double nextGem = saveData.GetGem() + amount;
+        saveData.SetGem(nextGem);
+
+        OnGemChanged?.Invoke(nextGem);
+    }
+
+    public bool TrySpendGold(double amount)
+    {
+        if (amount <= 0)
+        {
             return true;
         }
-        else
+
+        SaveData saveData = SaveManager.Instance.CurrentData;
+        double currentGold = saveData.GetGold();
+
+        if (currentGold < amount)
         {
-            Debug.Log("재화 부족");
+            Debug.Log("[CurrencyManager] Not enough gold.");
             return false;
         }
+
+        double nextGold = currentGold - amount;
+        saveData.SetGold(nextGold);
+        OnGoldChanged?.Invoke(nextGold);
+        return true;
     }
+
+    public bool TrySpendGem(double amount)
+    {
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        SaveData saveData = SaveManager.Instance.CurrentData;
+        double currentGem = saveData.GetGem();
+
+        if (currentGem < amount)
+        {
+            Debug.Log("[CurrencyManager] Not enough gems.");
+            return false;
+        }
+
+        double nextGem = currentGem - amount;
+        saveData.SetGem(nextGem);
+        OnGemChanged?.Invoke(nextGem);
+        return true;
+    }
+
 }

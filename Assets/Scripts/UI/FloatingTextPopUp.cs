@@ -1,6 +1,7 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+
 public enum TextType
 {
     NormalDamage,
@@ -11,45 +12,80 @@ public enum TextType
 
 public class FloatingTextPopUp : MonoBehaviour
 {
+    private const float DamageTextScale = 0.006f;
+    private const float DamageMoveY = 0.25f;
+    private const float DamageMoveDuration = 0.4f;
+    private const float FadeDelay = 0.5f;
+    private const float FadeDuration = 0.3f;
+
     [SerializeField] private TextMeshProUGUI text;
-    private Poolable _poolable;
+
+    private Poolable poolable;
+    private TweenCallback releaseCallback;
+
     private void Awake()
     {
-        _poolable = GetComponent<Poolable>();
+        poolable = GetComponent<Poolable>();
+        releaseCallback = Release;
+    }
+
+    public void Setup(float value, TextType type)
+    {
+        text.SetText("{0:0}", value);
+        Play(type);
     }
 
     public void Setup(string content, TextType type)
     {
         text.text = content;
+        Play(type);
+    }
+
+    private void Play(TextType type)
+    {
+        transform.DOKill();
+        text.DOKill();
         text.alpha = 1f;
 
         transform.localPosition = Vector3.zero;
         transform.localScale = Vector3.zero;
 
-        Sequence seq = DOTween.Sequence();
+        Sequence sequence = DOTween.Sequence();
+        ApplyStyle(type, sequence);
 
-        // 타입에 따라 다른 연출 적용
+        sequence.Insert(FadeDelay, text.DOFade(0f, FadeDuration));
+        sequence.OnComplete(releaseCallback);
+    }
+
+    private void ApplyStyle(TextType type, Sequence sequence)
+    {
         switch (type)
         {
             case TextType.NormalDamage:
                 text.color = Color.yellow;
-                seq.Append(transform.DOScale(0.006f, 0.006f).SetEase(Ease.OutBack));
-                seq.Join(transform.DOLocalMoveY(transform.position.y + 0.25f, 0.4f));
+                AppendDamageTween(sequence);
                 break;
             case TextType.CriticalDamage:
                 text.color = Color.red;
-                seq.Append(transform.DOScale(0.006f, 0.006f).SetEase(Ease.OutBack));
-                seq.Join(transform.DOLocalMoveY(transform.position.y + 0.25f, 0.4f));
+                AppendDamageTween(sequence);
                 break;
             case TextType.GoldDrop:
+            case TextType.Heal:
                 break;
         }
+    }
 
-        // 공통 마무리 (사라지고 풀로 돌아가기)
-        seq.Insert(0.5f, text.DOFade(0f, 0.3f));
-        seq.OnComplete(() =>
+    private void AppendDamageTween(Sequence sequence)
+    {
+        sequence.Append(transform.DOScale(DamageTextScale, DamageTextScale).SetEase(Ease.OutBack));
+        sequence.Join(transform.DOLocalMoveY(DamageMoveY, DamageMoveDuration));
+    }
+
+    private void Release()
+    {
+        if (poolable != null)
         {
-            _poolable.Release();
-        });
+            poolable.Release();
+        }
     }
 }

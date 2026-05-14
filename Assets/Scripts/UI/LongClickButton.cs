@@ -94,7 +94,7 @@ public class LongClickButton : MonoBehaviour, IPointerDownHandler, IPointerUpHan
             return;
         }
 
-        SaveManager.Instance.SaveGame();
+        SaveManager.Instance.SaveGameSync();
         wasChanged = false;
     }
 }

@@ -30,24 +30,17 @@ public sealed class ShopPopUp : MonoBehaviour
     private readonly List<EquipmentSlotUI> resultSlots = new List<EquipmentSlotUI>();
     private GridLayoutGroup gridLayoutGroup;
     private Coroutine popupRoutine;
-    private WaitForSeconds newItemShakeWait;
-    private WaitForSeconds shakeWait;
-    private WaitForSeconds chestOpenWait;
-    private WaitForSeconds fadeWait;
-    private WaitForSeconds slotDelayWait;
+
+    private readonly int animIntroHash = Animator.StringToHash("ANIM_Chest_Royal_Intro");
+    private readonly int animOpenHash = Animator.StringToHash("ANIM_Chest_Royal_Open");
+    
+    private Vector2 initialChestAnchorPos;
 
     private void Awake()
     {
         gridLayoutGroup = slotParent.GetComponent<GridLayoutGroup>();
-        CacheYieldInstructions();
+        initialChestAnchorPos = chestRawImage.rectTransform.anchoredPosition;
     }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        CacheYieldInstructions();
-    }
-#endif
 
     public void RefreshSettingUI()
     {
@@ -61,6 +54,7 @@ public sealed class ShopPopUp : MonoBehaviour
         SetResultSlotsActive(0);
 
         chestRawImage.DOKill();
+        chestRawImage.rectTransform.anchoredPosition = initialChestAnchorPos;
         chestRawImage.gameObject.SetActive(true);
 
         Color resetColor = chestRawImage.color;
@@ -74,7 +68,7 @@ public sealed class ShopPopUp : MonoBehaviour
         RefreshSettingUI();
         ApplyGridLayout(resultIDs.Count);
 
-        chestAnim.Play("ANIM_Chest_Royal_Intro", -1, 0f);
+        chestAnim.Play(animIntroHash, -1, 0f);
 
         GradeType maxGrade = GradeType.Normal;
         bool hasNewItem = false;
@@ -106,21 +100,21 @@ public sealed class ShopPopUp : MonoBehaviour
         if (hasNewItem)
         {
             chestRawImage.rectTransform.DOShakeAnchorPos(newItemshakeDuration, 30f, 40);
-            yield return newItemShakeWait;
+            yield return new WaitForSeconds(newItemshakeDuration);
         }
         else
         {
             chestRawImage.rectTransform.DOShakeAnchorPos(shakeDuration, 20f, 30);
-            yield return shakeWait;
+            yield return new WaitForSeconds(shakeDuration);
         }
 
-        chestAnim.Play("ANIM_Chest_Royal_Open", -1, 0f);
+        chestAnim.Play(animOpenHash, -1, 0f);
         PlayGlowParticles();
 
-        yield return chestOpenWait;
+        yield return new WaitForSeconds(chestOpenDelay);
 
         chestRawImage.DOFade(0f, 0.3f);
-        yield return fadeWait;
+        yield return new WaitForSeconds(0.3f);
 
         panel.SetActive(true);
         panel.transform.DOKill();
@@ -143,7 +137,7 @@ public sealed class ShopPopUp : MonoBehaviour
             slotTransform.localScale = Vector3.zero;
             slotTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack);
 
-            yield return slotDelayWait;
+            yield return new WaitForSeconds(slotDelay);
         }
 
         SetResultSlotsActive(resultIDs.Count);
@@ -224,12 +218,5 @@ public sealed class ShopPopUp : MonoBehaviour
         }
     }
 
-    private void CacheYieldInstructions()
-    {
-        newItemShakeWait = new WaitForSeconds(Mathf.Max(0f, newItemshakeDuration));
-        shakeWait = new WaitForSeconds(Mathf.Max(0f, shakeDuration));
-        chestOpenWait = new WaitForSeconds(Mathf.Max(0f, chestOpenDelay));
-        fadeWait = new WaitForSeconds(0.3f);
-        slotDelayWait = new WaitForSeconds(Mathf.Max(0f, slotDelay));
-    }
+
 }

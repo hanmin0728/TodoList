@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 
 public sealed class GoldBarUI : MonoBehaviour
@@ -18,12 +18,12 @@ public sealed class GoldBarUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (CurrencyManager.Instance != null)
+        if (CurrencyManager.HasInstance)
         {
             CurrencyManager.Instance.OnGoldChanged -= UpdateGoldUI;
         }
 
-        if (SaveManager.Instance != null)
+        if (SaveManager.HasInstance)
         {
             SaveManager.Instance.OnDataLoaded -= UpdateUI;
         }

@@ -4,6 +4,8 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T _instance;
     private static bool _applicationIsQuitting = false;
+
+    public static bool HasInstance => _instance != null && !_applicationIsQuitting;
     
     public static T Instance
     {

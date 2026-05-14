@@ -21,7 +21,7 @@ public sealed class SaveManager : Singleton<SaveManager>
     // 로드 완료 알림용 액션
     public event Action OnDataLoaded;
 
-    public SaveData CurrentData { get; private set; }
+    public SaveData CurrentData;
 
     private bool isSaving = false; // 중복 저장 방지 플래그
 

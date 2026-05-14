@@ -146,7 +146,7 @@ public sealed class StageManager : Singleton<StageManager>
         }
 
         SaveManager.Instance.CurrentData.SetStageProgress(currentStageID, currentWaveIndex);
-        SaveManager.Instance.SaveGame();
+        SaveManager.Instance.SaveGameSync();
         StartWave(currentStageID, currentWaveIndex);
     }
 

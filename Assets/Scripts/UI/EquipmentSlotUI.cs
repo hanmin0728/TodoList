@@ -25,7 +25,7 @@ public sealed class EquipmentSlotUI : MonoBehaviour
     {
         Data = data;
         isShopSlot = isShop;
-        equipmentTypeKey = data.EquipType.ToString();
+        equipmentTypeKey = GetEquipmentTypeKey(data.EquipType);
 
         if (rankBGImage != null)
         {
@@ -95,5 +95,18 @@ public sealed class EquipmentSlotUI : MonoBehaviour
 
         EquipmentManager.Instance.MarkItemAsSeen(Data.ID);
         SlotClicked?.Invoke(Data);
+    }
+
+    private static string GetEquipmentTypeKey(EquipmentType equipmentType)
+    {
+        switch (equipmentType)
+        {
+            case EquipmentType.Weapon:
+                return "Weapon";
+            case EquipmentType.Ring:
+                return "Ring";
+            default:
+                return string.Empty;
+        }
     }
 }

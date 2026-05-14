@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
-public class ShopRateData
+
+public sealed class ShopRateData
 {
     public int Level;
     public int RequireCount;
@@ -13,13 +13,40 @@ public class ShopRateData
     public float LegendRate;
 }
 
-public class ShopManager : Singleton<ShopManager>
+public sealed class ShopManager : Singleton<ShopManager>
 {
-    [Header("장비 티어 등장 확률 (4T, 3T, 2T, 1T)")]
-    [SerializeField] private float[] tierRates = new float[] { 65f, 20f, 10f, 5f };
+    [SerializeField] private float[] tierRates = { 65f, 20f, 10f, 5f };
 
-    private Dictionary<int, ShopRateData> shopRateDic = new Dictionary<int, ShopRateData>();
-    public bool IsInitialized { get; private set; } = false;
+    private readonly Dictionary<int, ShopRateData> shopRateByLevel = new Dictionary<int, ShopRateData>();
+    private readonly Dictionary<EquipmentPoolKey, List<string>> equipmentIdsByPoolKey = new Dictionary<EquipmentPoolKey, List<string>>();
+
+    public bool IsInitialized { get; private set; }
+
+    private readonly struct EquipmentPoolKey : IEquatable<EquipmentPoolKey>
+    {
+        private readonly EquipmentType equipmentType;
+        private readonly GradeType grade;
+        private readonly int tier;
+
+        public EquipmentPoolKey(EquipmentType equipmentType, GradeType grade, int tier)
+        {
+            this.equipmentType = equipmentType;
+            this.grade = grade;
+            this.tier = tier;
+        }
+
+        public bool Equals(EquipmentPoolKey other)
+        {
+            return equipmentType == other.equipmentType && grade == other.grade && tier == other.tier;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is EquipmentPoolKey other && Equals(other);
+        }
+        public override int GetHashCode() => HashCode.Combine((int)equipmentType, (int)grade, tier); // 🌟 C# 8.0의 빠르고 안전한 해시 조합기 사용
+      
+    }
 
     private void Start()
     {
@@ -31,21 +58,30 @@ public class ShopManager : Singleton<ShopManager>
         {
             CSVManager.Instance.OnLoadingComplete += LoadShopRateData;
         }
+
+        if (EquipmentManager.Instance.IsInitialized)
+        {
+            RebuildEquipmentIdPool();
+        }
+        else
+        {
+            EquipmentManager.Instance.OnDataInitialized += RebuildEquipmentIdPool;
+        }
     }
+
     private void LoadShopRateData()
     {
         CSVManager.Instance.OnLoadingComplete -= LoadShopRateData;
-        shopRateDic.Clear();
+        shopRateByLevel.Clear();
 
-        var table = CSVManager.Instance.GetTable("ShopTable");
-
+        List<Dictionary<string, object>> table = CSVManager.Instance.GetTable("ShopTable");
         if (table == null)
         {
-            Debug.LogError("ShopTable 찾을 수 없습니다! CSVManager의 FileNames를 확인하세요.");
+            Debug.LogError("[ShopManager] ShopTable is missing. Check CSVManager file names.");
             return;
         }
 
-        foreach (var row in table)
+        foreach (Dictionary<string, object> row in table)
         {
             try
             {
@@ -59,147 +95,179 @@ public class ShopManager : Singleton<ShopManager>
                     LegendRate = float.Parse(row["Legend_Rate"].ToString())
                 };
 
-                if (!shopRateDic.ContainsKey(data.Level))
+                if (!shopRateByLevel.ContainsKey(data.Level))
                 {
-                    shopRateDic.Add(data.Level, data);
+                    shopRateByLevel.Add(data.Level, data);
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"상점 데이터 파싱 중 오류 발생! Level: {row["ShopLevel"]} / 에러: {e.Message}");
+                Debug.LogError($"[ShopManager] Failed to parse shop data. Level: {row["ShopLevel"]}, Error: {e.Message}");
             }
         }
+
         IsInitialized = true;
-        Debug.Log($"<color=cyan>[ShopManager]</color> 상점 확률 테이블 {shopRateDic.Count}개 로드 완료!");
+        Debug.Log($"[ShopManager] Shop rate table loaded. Count: {shopRateByLevel.Count}");
     }
 
-    /// <summary>
-    /// 통합 소환 시스템 (무기, 반지, 스킬 공용)
-    /// </summary>
-    public List<string> SummonItems(string category, int count)
+    public bool CanSummonEquipment()
     {
-        List<string> results = new List<string>();
+        return IsInitialized && EnsureEquipmentPoolReady();
+    }
+
+    public List<string> SummonItems(EquipmentType equipmentType, int count)
+    {
+        List<string> results = new List<string>(count);
 
         if (!IsInitialized)
         {
-            Debug.LogWarning("[ShopManager] 아직 데이터가 로드되지 않았습니다!");
+            Debug.LogWarning("[ShopManager] Shop data is not loaded yet.");
             return results;
         }
 
+        if (!EnsureEquipmentPoolReady())
+        {
+            Debug.LogWarning("[ShopManager] Equipment data is not ready yet.");
+            return results;
+        }
+
+        SaveData saveData = SaveManager.Instance.CurrentData;
+
         for (int i = 0; i < count; i++)
         {
-            int currentLevel = SaveManager.Instance.CurrentData.GetShopLevel();
-
-            if (!shopRateDic.ContainsKey(currentLevel))
+            int currentLevel = saveData.GetShopLevel();
+            if (!shopRateByLevel.TryGetValue(currentLevel, out ShopRateData currentRate))
             {
-                Debug.LogError($"[ShopManager] 레벨 {currentLevel}의 데이터가 없습니다.");
+                Debug.LogError($"[ShopManager] Shop level data is missing. Level: {currentLevel}");
                 break;
             }
 
-            ShopRateData currentRate = shopRateDic[currentLevel];
+            saveData.AddShopSummonCount(1);
+            int summonCount = saveData.GetShopSummonCount();
 
-            // 경험치 증가
-            SaveManager.Instance.CurrentData.AddShopSummonCount(1);
-            int currentExp = SaveManager.Instance.CurrentData.GetShopSummonCount();
-
-            // 레벨업 체크
-            if (currentExp >= currentRate.RequireCount && shopRateDic.ContainsKey(currentLevel + 1))
+            if (summonCount >= currentRate.RequireCount &&
+                shopRateByLevel.TryGetValue(currentLevel + 1, out ShopRateData nextRate))
             {
                 currentLevel++;
-                SaveManager.Instance.CurrentData.SetShopLevel(currentLevel);
-                currentRate = shopRateDic[currentLevel];
-                Debug.Log($"상점 레벨업! -> Lv.{currentLevel}");
+                saveData.SetShopLevel(currentLevel);
+                currentRate = nextRate;
+                Debug.Log($"[ShopManager] Shop level up. Level: {currentLevel}");
             }
 
-            // 확률 굴리기
             GradeType rolledGrade = RollGrade(currentRate);
-            string itemID = string.Empty;
+            string itemId = GetRandomEquipmentId(equipmentType, rolledGrade);
 
-            if (category == "Weapon" || category == "Ring")
+            if (string.IsNullOrEmpty(itemId))
             {
-                itemID = GetRandomEquipment(category, rolledGrade);
-            }
-            else if (category == "Skill")
-            {
-                //스킬 뽑는거 나중에 추가
+                continue;
             }
 
-            if (!string.IsNullOrEmpty(itemID))
-            {
-                results.Add(itemID);
-                ApplySummonResult(category, itemID);
-
-                Debug.Log($"[소환 진행 중] 카테고리: {category} | 등급: <color=orange>{rolledGrade}</color> | 획득 ID: {itemID}");
-            }
+            results.Add(itemId);
+            ApplySummonResult(saveData, itemId);
         }
 
-        SaveManager.Instance.SaveGame();
-
-        if (category == "Weapon" || category == "Ring")
-        {
-            EquipmentManager.OnEquipmentDataChanged?.Invoke();
-        }
-
-        string resultSummary = string.Join(", ", results);
-        Debug.Log($"<color=yellow>[최종 소환 결과]</color> {category} {count}회 뽑기 완료!\n획득 목록: {resultSummary}");
-
+        SaveManager.Instance.SaveGameSync();
+        EquipmentManager.NotifyEquipmentDataChanged();
         return results;
     }
 
     private GradeType RollGrade(ShopRateData rate)
     {
-        float randomVal = Random.Range(0f, 100f);
-        float cumulative = 0f;
+        float randomValue = Random.Range(0f, 100f);
+        float cumulativeRate = rate.NormalRate;
 
-        cumulative += rate.NormalRate;
-        if (randomVal <= cumulative) return GradeType.Normal;
+        if (randomValue <= cumulativeRate)
+        {
+            return GradeType.Normal;
+        }
 
-        cumulative += rate.RareRate;
-        if (randomVal <= cumulative) return GradeType.Rare;
+        cumulativeRate += rate.RareRate;
+        if (randomValue <= cumulativeRate)
+        {
+            return GradeType.Rare;
+        }
 
-        cumulative += rate.EpicRate;
-        if (randomVal <= cumulative) return GradeType.Epic;
+        cumulativeRate += rate.EpicRate;
+        if (randomValue <= cumulativeRate)
+        {
+            return GradeType.Epic;
+        }
 
         return GradeType.Legend;
     }
 
-    private string GetRandomEquipment(string category, GradeType grade)
+    private string GetRandomEquipmentId(EquipmentType equipmentType, GradeType grade)
     {
-        float randomVal = Random.Range(0f, 100f);
-        float cumulative = 0f;
-        int selectedTier = 1;
+        int selectedTier = RollTier();
+        EquipmentPoolKey key = new EquipmentPoolKey(equipmentType, grade, selectedTier);
+
+        if (!equipmentIdsByPoolKey.TryGetValue(key, out List<string> itemIds) || itemIds.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        return itemIds[Random.Range(0, itemIds.Count)];
+    }
+
+    private int RollTier()
+    {
+        float randomValue = Random.Range(0f, 100f);
+        float cumulativeRate = 0f;
 
         for (int i = 0; i < tierRates.Length; i++)
         {
-            cumulative += tierRates[i];
-            if (randomVal <= cumulative)
+            cumulativeRate += tierRates[i];
+            if (randomValue <= cumulativeRate)
             {
-                selectedTier = i + 1;
-                break;
+                return i + 1;
             }
         }
 
-        Enum.TryParse(category, out EquipmentType typeEnum);
-
-        var items = EquipmentManager.Instance.EquipDataDic.Values.Where(x => x.EquipType == typeEnum && x.Grade == grade && x.Tier == selectedTier)
-            .ToList();
-
-        if (items.Count == 0) return string.Empty;
-
-        return items[Random.Range(0, items.Count)].ID;
+        return tierRates.Length;
     }
 
-    private void ApplySummonResult(string category, string id)
+    private static void ApplySummonResult(SaveData saveData, string itemId)
     {
-        var data = SaveManager.Instance.CurrentData;
-
-        if (category == "Weapon" || category == "Ring")
+        if (saveData.GetEquipCount(itemId) == 0)
         {
-            if (data.GetEquipCount(id) == 0)
+            saveData.SetNewStatus(itemId, true);
+        }
+
+        saveData.AddEquipCount(itemId, 1);
+    }
+
+    private bool EnsureEquipmentPoolReady()
+    {
+        if (equipmentIdsByPoolKey.Count > 0)
+        {
+            return true;
+        }
+
+        if (!EquipmentManager.Instance.IsInitialized)
+        {
+            return false;
+        }
+
+        RebuildEquipmentIdPool();
+        return equipmentIdsByPoolKey.Count > 0;
+    }
+
+    private void RebuildEquipmentIdPool()
+    {
+        EquipmentManager.Instance.OnDataInitialized -= RebuildEquipmentIdPool;
+        equipmentIdsByPoolKey.Clear();
+
+        foreach (EquipmentData data in EquipmentManager.Instance.GetAllEquipmentData())
+        {
+            EquipmentPoolKey key = new EquipmentPoolKey(data.EquipType, data.Grade, data.Tier);
+
+            if (!equipmentIdsByPoolKey.TryGetValue(key, out List<string> itemIds))
             {
-                data.SetNewStatus(id, true);
+                itemIds = new List<string>();
+                equipmentIdsByPoolKey.Add(key, itemIds);
             }
-            data.AddEquipCount(id, 1);
+
+            itemIds.Add(data.ID);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -72,15 +72,29 @@ public class UpgradeCell : MonoBehaviour
         int nextLevel = isMax ? level : level + 1;
 
         nameText.text = data.Name;
-        levelText.text = isMax ? "MAX" : level.ToString();
+        if (isMax)
+        {
+            levelText.text = "MAX";
+        }
+        else
+        {
+            levelText.SetText("{0}", level);
+        }
 
         float currentValue = data.GetValue(level);
         float nextValue = data.GetValue(nextLevel);
 
         if (data.IsPercentageStat)
         {
-            statBeforeText.text = currentValue.ToString("F1") + "%";
-            statAfterText.text = isMax ? string.Empty : nextValue.ToString("F1") + "%";
+            statBeforeText.SetText("{0:0.0}%", currentValue);
+            if (isMax)
+            {
+                statAfterText.text = string.Empty;
+            }
+            else
+            {
+                statAfterText.SetText("{0:0.0}%", nextValue);
+            }
         }
         else
         {
@@ -110,7 +124,7 @@ public class UpgradeCell : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (CurrencyManager.Instance != null)
+        if (CurrencyManager.HasInstance)
         {
             CurrencyManager.Instance.OnGoldChanged -= RefreshVisual;
         }

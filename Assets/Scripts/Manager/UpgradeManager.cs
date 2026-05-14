@@ -1,70 +1,81 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UpgradeManager : Singleton<UpgradeManager>
+public sealed class UpgradeManager : Singleton<UpgradeManager>
 {
-    public Dictionary<string, UpgradeData> UpgradeDictionary { get; private set; } = new Dictionary<string, UpgradeData>();
-    public bool IsInitialized { get; private set; } = false;
+    private readonly Dictionary<string, UpgradeData> upgradeDataById = new Dictionary<string, UpgradeData>();
 
+    public bool IsInitialized { get; private set; }
     public event Action OnUpgradeDataLoaded;
 
     private void Start()
     {
-        // CSVManager가 이미 로딩을 끝냈다면 바로 파싱 시작
         if (CSVManager.Instance.IsInitialized)
         {
             LoadUpgradeData();
         }
         else
         {
-            // 아직 로딩 중이라면 로딩 완료 이벤트에 대기 등록
             CSVManager.Instance.OnLoadingComplete += LoadUpgradeData;
         }
-
     }
 
-    /// <summary>
-    /// CSV에서 데이터를 읽어와 딕셔너리에 넣어주는 함수
-    /// </summary>
+    public UpgradeData GetUpgradeData(string id)
+    {
+        if (upgradeDataById.TryGetValue(id, out UpgradeData data))
+        {
+            return data;
+        }
+
+        Debug.LogError($"[UpgradeManager] Upgrade data is missing. ID: {id}");
+        return null;
+    }
+
+    public IEnumerable<UpgradeData> GetAllUpgradeData()
+    {
+        return upgradeDataById.Values;
+    }
+
     private void LoadUpgradeData()
     {
-        // 이벤트 중복 호출 방지
         CSVManager.Instance.OnLoadingComplete -= LoadUpgradeData;
+        upgradeDataById.Clear();
 
-        UpgradeDictionary.Clear();
-
-        var table = CSVManager.Instance.GetTable("UpgradeTable");
-
+        List<Dictionary<string, object>> table = CSVManager.Instance.GetTable("UpgradeTable");
         if (table == null)
         {
-            Debug.LogError("UpgradeTable을 찾을 수 없습니다.");
+            Debug.LogError("[UpgradeManager] UpgradeTable is missing. Check CSVManager file names.");
             return;
         }
 
-        foreach (var row in table)
+        foreach (Dictionary<string, object> row in table)
         {
-            UpgradeData data = ParseRowToData(row);
-            if (!UpgradeDictionary.ContainsKey(data.ID))
+            try
             {
-                UpgradeDictionary.Add(data.ID, data);
+                UpgradeData data = ParseRowToData(row);
+                if (!upgradeDataById.ContainsKey(data.ID))
+                {
+                    upgradeDataById.Add(data.ID, data);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UpgradeManager] Failed to parse upgrade data. ID: {row["ID"]}, Error: {e.Message}");
             }
         }
 
         IsInitialized = true;
         OnUpgradeDataLoaded?.Invoke();
 
-        Debug.Log($"[UpgradeManager] {UpgradeDictionary.Count}개의 데이터 로드 완료.");
+        Debug.Log($"[UpgradeManager] Upgrade table loaded. Count: {upgradeDataById.Count}");
     }
 
-    //Dictionary를 UpgradeData로 변환
-    private UpgradeData ParseRowToData(Dictionary<string, object> row)
+    private static UpgradeData ParseRowToData(Dictionary<string, object> row)
     {
-        string rawValue = "0";
-        if (row.ContainsKey("IsPercentageStat"))
-        {
-            rawValue = row["IsPercentageStat"].ToString();
-        }
+        string percentageStatValue = row.ContainsKey("IsPercentageStat")
+            ? row["IsPercentageStat"].ToString()
+            : "0";
 
         return new UpgradeData
         {
@@ -75,21 +86,7 @@ public class UpgradeManager : Singleton<UpgradeManager>
             BaseCost = double.Parse(row["BaseCost"].ToString()),
             CostMultiplier = float.Parse(row["CostMultiplier"].ToString()),
             MaxLevel = int.Parse(row["MaxLevel"].ToString()),
-            IsPercentageStat = (rawValue == "1")
+            IsPercentageStat = percentageStatValue == "1"
         };
-    }
-
-    /// <summary>
-    /// 능력치 데이터를 꺼내주는 함수 
-    /// </summary>
-    public UpgradeData GetUpgradeData(string id)
-    {
-        if (UpgradeDictionary.TryGetValue(id, out UpgradeData data))
-        {
-            return data;
-        }
-
-        Debug.LogError($"[UpgradeManager] '{id}' ID에 해당하는 업그레이드 데이터를 찾을 수 없습니다!");
-        return null;
     }
 }

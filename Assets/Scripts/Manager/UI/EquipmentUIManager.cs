@@ -2,47 +2,53 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EquipmentUIManager : MonoBehaviour
+public sealed class EquipmentUIManager : MonoBehaviour
 {
     [SerializeField] private GameObject slotPrefab;
 
-    [Header("스크롤 뷰 오브젝트 (탭 전환용)")]
-    [SerializeField] private GameObject weaponScrollView; 
+    [Header("Scroll Views")]
+    [SerializeField] private GameObject weaponScrollView;
     [SerializeField] private GameObject ringScrollView;
-    [SerializeField] private Toggle weaponToggle; 
-    [SerializeField] private Toggle ringToggle;   
+    [SerializeField] private Toggle weaponToggle;
+    [SerializeField] private Toggle ringToggle;
 
-    [Header("슬롯이 생성될 부모")]
+    [Header("Slot Parents")]
     [SerializeField] private Transform weaponContent;
     [SerializeField] private Transform ringContent;
 
+    [SerializeField] private GearPopUp gearPopUp;
 
-    public List<EquipmentSlotUI> allSlots = new List<EquipmentSlotUI>();
+    private readonly List<EquipmentSlotUI> allSlots = new List<EquipmentSlotUI>();
+    private ScrollRect weaponScrollRect;
+    private ScrollRect ringScrollRect;
+    private bool isCreated;
 
-    private bool isCreated = false; // 중복 생성 방지 플래그
+    private void Awake()
+    {
+        if (weaponScrollView != null)
+        {
+            weaponScrollRect = weaponScrollView.GetComponent<ScrollRect>();
+        }
 
-
-    [SerializeField] private GearPopUp gearPopUp; 
+        if (ringScrollView != null)
+        {
+            ringScrollRect = ringScrollView.GetComponent<ScrollRect>();
+        }
+    }
 
     private void OnEnable()
     {
-        EquipmentSlotUI.OnSlotClicked += ShowGearPopup;
-        EquipmentManager.OnEquipmentDataChanged += RefreshAllSlots;
-
+        EquipmentSlotUI.SlotClicked += ShowGearPopup;
+        EquipmentManager.EquipmentDataChanged += RefreshAllSlots;
     }
 
     private void OnDisable()
     {
-        EquipmentSlotUI.OnSlotClicked -= ShowGearPopup;
-        EquipmentManager.OnEquipmentDataChanged -= RefreshAllSlots;
+        EquipmentSlotUI.SlotClicked -= ShowGearPopup;
+        EquipmentManager.EquipmentDataChanged -= RefreshAllSlots;
     }
 
-    private void ShowGearPopup(EquipmentData data)
-    {
-        gearPopUp.OpenPopup(data);
-    }
-
-    void Start()
+    private void Start()
     {
         ChangeSubTab(0);
 
@@ -56,65 +62,67 @@ public class EquipmentUIManager : MonoBehaviour
         }
     }
 
+    public void ChangeSubTab(int index)
+    {
+        bool isWeaponTab = index == 0;
+
+        weaponScrollView.SetActive(isWeaponTab);
+        ringScrollView.SetActive(!isWeaponTab);
+        weaponToggle.isOn = isWeaponTab;
+        ringToggle.isOn = !isWeaponTab;
+
+        ResetScroll(isWeaponTab ? weaponScrollRect : ringScrollRect);
+    }
+
     private void InitSlots()
     {
+        EquipmentManager.Instance.OnDataInitialized -= InitSlots;
+
         if (isCreated)
         {
             RefreshAllSlots();
             return;
         }
 
-        EquipmentManager.Instance.OnDataInitialized -= InitSlots;
-
-        var dataDic = EquipmentManager.Instance.EquipDataDic;
-
-        foreach (var data in dataDic.Values)
+        foreach (EquipmentData data in EquipmentManager.Instance.GetAllEquipmentData())
         {
-            Transform targetParent = (data.EquipType == EquipmentType.Weapon) ? weaponContent : ringContent;
-
-            if (targetParent != null)
+            Transform targetParent = data.EquipType == EquipmentType.Weapon ? weaponContent : ringContent;
+            if (targetParent == null)
             {
-                var go = Instantiate(slotPrefab, targetParent);
-                var slot = go.GetComponent<EquipmentSlotUI>();
-                slot.Setup(data); 
-                allSlots.Add(slot);
+                continue;
             }
+
+            GameObject slotObject = Instantiate(slotPrefab, targetParent);
+            EquipmentSlotUI slot = slotObject.GetComponent<EquipmentSlotUI>();
+            slot.Setup(data);
+            allSlots.Add(slot);
         }
 
         Canvas.ForceUpdateCanvases();
-        ResetScroll(weaponScrollView);
-
+        ResetScroll(weaponScrollRect);
         isCreated = true;
-        Debug.Log("<color=green>[UI]</color> 슬롯 최초 1회 생성 완료 (메모리 최적화)");
     }
 
     private void RefreshAllSlots()
     {
-        foreach (var slot in allSlots)
+        for (int i = 0; i < allSlots.Count; i++)
         {
-            slot.UpdateUI(); 
+            allSlots[i].UpdateUI();
         }
     }
 
-    //Weapon/Ring 토글에 연결 0이면 무기 1이면 반지
-    public void ChangeSubTab(int index)
+    private void ShowGearPopup(EquipmentData data)
     {
-        weaponScrollView.SetActive(index == 0);
-        weaponToggle.isOn = (index == 0);
-
-        ringScrollView.SetActive(index == 1);
-        ringToggle.isOn = (index == 1);
-
-        if (index == 0) ResetScroll(weaponScrollView);
-        else ResetScroll(ringScrollView);
+        gearPopUp.OpenPopup(data);
     }
 
-    private void ResetScroll(GameObject scrollViewObj)
+    private static void ResetScroll(ScrollRect scrollRect)
     {
-        ScrollRect sr = scrollViewObj.GetComponent<ScrollRect>();
-        if (sr != null)
+        if (scrollRect == null)
         {
-            sr.verticalNormalizedPosition = 1f; // 맨위로
+            return;
         }
+
+        scrollRect.verticalNormalizedPosition = 1f;
     }
 }
