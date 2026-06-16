@@ -125,12 +125,16 @@ public sealed class EnemySpawner : Singleton<EnemySpawner>
             EnemyId = int.Parse(row["EnemyID"].ToString()),
             Name = row["Name"].ToString(),
             Hp = float.Parse(row["HP"].ToString()),
+            HpGrow = float.Parse(row["HP_Grow"].ToString()),
             Atk = float.Parse(row["ATK"].ToString()),
-            Def = float.Parse(row["DEF"].ToString()),
+            AtkGrow = float.Parse(row["ATK_Grow"].ToString()),
             MoveSpeed = float.Parse(row["MoveSpeed"].ToString()),
             AttackRange = float.Parse(row["AttackRange"].ToString()),
             AttackDelay = float.Parse(row["AttackDelay"].ToString()),
-            GoldReward = long.Parse(row["GoldReward"].ToString())
+            GoldReward = long.Parse(row["GoldReward"].ToString()),
+            VariationMin = int.Parse(row["VariationMin"].ToString()),
+            VariationMax = int.Parse(row["VariationMax"].ToString()),
+            IsBoss = bool.Parse(row["IsBoss"].ToString())
         };
     }
 

@@ -1,5 +1,7 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.U2D.Animation;
 
 public abstract class EnemyBase : Poolable, IDamageable
 {
@@ -9,8 +11,7 @@ public abstract class EnemyBase : Poolable, IDamageable
 
     protected float currentHp;
     public bool IsDead { get; protected set; }
-    public bool IsSpawning { get; private set; } = true; 
-
+    public bool IsSpawning { get; private set; } = true;
 
     private int defaultLayer;
     public StateMachine<EnemyBase> StateMachine { get; protected set; }
@@ -29,9 +30,11 @@ public abstract class EnemyBase : Poolable, IDamageable
     public EnemyData Data { get; private set; }
     public bool IsAttackAnimationFinished { get; set; } = true;
 
+    private SpriteResolver[] _resolvers;
+
     protected virtual void Awake()
     {
-        Anim = GetComponent<Animator>();
+        Anim = GetComponentInChildren<Animator>();
         Rigid2D = GetComponent<Rigidbody2D>();
         Sprite = GetComponent<SpriteRenderer>();
         Collider2D = GetComponent<Collider2D>();
@@ -42,6 +45,7 @@ public abstract class EnemyBase : Poolable, IDamageable
         AttackState = new EnemyAttackState(this, StateMachine);
         HitState = new EnemyHitState(this, StateMachine);
         DieState = new EnemyDieState(this, StateMachine);
+        _resolvers = GetComponentsInChildren<SpriteResolver>(true);
 
         defaultLayer = gameObject.layer;
     }
@@ -70,16 +74,33 @@ public abstract class EnemyBase : Poolable, IDamageable
     public void SpawnInit(EnemyData newData)
     {
         Data = newData;
-        currentHp = Data.Hp;
         
+        currentHp = Data.Hp;
+
         TargetPlayer = GameManager.Instance.Player;
+        
+        string randomLabel = Data.GetRandomLabel();
+        if (!string.IsNullOrEmpty(randomLabel))
+        {
+            foreach (var resolver in _resolvers)
+            {
+                string category = resolver.GetCategory();
+                string fullLabelName = $"{category.ToLower()}_{randomLabel}";
+                resolver.SetCategoryAndLabel(category, fullLabelName);
+            }
+        }
+
+        Anim.Rebind();
+        Anim.Update(0f);
+
         StartCoroutine(SpawnRoutine()); // 태어난 직후 잠시 무적/감지불가
         StateMachine.Initialize(ChaseState);
     }
+
     private IEnumerator SpawnRoutine()
     {
         IsSpawning = true;
-        yield return new WaitForSeconds(0.5f); // 0.5초 동안은 스폰 상태
+        yield return new WaitForSeconds(0.5f); 
         IsSpawning = false;
     }
 
@@ -125,7 +146,6 @@ public abstract class EnemyBase : Poolable, IDamageable
         gameObject.layer = 0;
 
         IsDead = true;
-
         CurrencyManager.Instance.AddGold(Data.GoldReward);
         EnemySpawner.Instance.OnEnemyDeath();
 

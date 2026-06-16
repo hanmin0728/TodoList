@@ -59,8 +59,6 @@ public sealed class PlayerAttackState : BaseState<PlayerController>
 
     public override void Exit()
     {
-        Debug.Log("어택스테이트 나감");
-
     }
 
     private void PlayAttackAnimation()
