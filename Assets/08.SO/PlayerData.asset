@@ -20,3 +20,4 @@ MonoBehaviour:
   knockBackForce: 3
   attackAnimationParam: PlayerAttack
   moveAnimationParam: PlayerMove
+  idleAnimationParam: PlayerIdle

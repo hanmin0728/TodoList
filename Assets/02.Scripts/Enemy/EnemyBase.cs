@@ -8,8 +8,11 @@ public abstract class EnemyBase : Poolable, IDamageable
     private Coroutine flashCoroutine;
 
     protected float currentHp;
-    protected bool isDead;
+    public bool IsDead { get; protected set; }
+    public bool IsSpawning { get; private set; } = true; 
 
+
+    private int defaultLayer;
     public StateMachine<EnemyBase> StateMachine { get; protected set; }
     public EnemyChaseState ChaseState { get; protected set; }
     public EnemyAttackState AttackState { get; protected set; }
@@ -39,11 +42,13 @@ public abstract class EnemyBase : Poolable, IDamageable
         AttackState = new EnemyAttackState(this, StateMachine);
         HitState = new EnemyHitState(this, StateMachine);
         DieState = new EnemyDieState(this, StateMachine);
+
+        defaultLayer = gameObject.layer;
     }
 
     protected virtual void OnEnable()
     {
-        isDead = false;
+        IsDead = false;
         IsAttackAnimationFinished = true;
 
         if (Sprite != null)
@@ -68,14 +73,24 @@ public abstract class EnemyBase : Poolable, IDamageable
         currentHp = Data.Hp;
         
         TargetPlayer = GameManager.Instance.Player;
+        StartCoroutine(SpawnRoutine()); // 태어난 직후 잠시 무적/감지불가
         StateMachine.Initialize(ChaseState);
+    }
+    private IEnumerator SpawnRoutine()
+    {
+        IsSpawning = true;
+        yield return new WaitForSeconds(0.5f); // 0.5초 동안은 스폰 상태
+        IsSpawning = false;
     }
 
     public override void OnSpawn()
     {
-        isDead = false;
+        IsDead = false;
+
+        gameObject.layer = defaultLayer;
+
         IsAttackAnimationFinished = true;
-        
+
         if (Collider2D != null)
         {
             Collider2D.enabled = true;
@@ -84,7 +99,7 @@ public abstract class EnemyBase : Poolable, IDamageable
 
     public virtual void OnDamage(float damage, float knockBackForce)
     {
-        if (isDead || damage <= 0f)
+        if (IsDead || damage <= 0f)
         {
             return;
         }
@@ -105,9 +120,12 @@ public abstract class EnemyBase : Poolable, IDamageable
 
     public void Die()
     {
-        if (isDead) return;
+        if (IsDead) return;
 
-        isDead = true;
+        gameObject.layer = 0;
+
+        IsDead = true;
+
         CurrencyManager.Instance.AddGold(Data.GoldReward);
         EnemySpawner.Instance.OnEnemyDeath();
 

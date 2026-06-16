@@ -37,19 +37,30 @@ public sealed class PlayerAttackState : BaseState<PlayerController>
 
         if (attackTimer > 0f) return;
 
-        if (owner.CheckEnemyInRange())
+        if (owner.IsAttackAnimationFinished)
         {
-            isWaitingForNextAttack = false;
-            attackTimer = owner.CurrentAttackDelay;
-            PlayAttackAnimation();
-            return;
+            // 더 이상 때릴 놈이 없으면 즉시 이동 상태로 전환
+            if (!owner.CheckEnemyInRange())
+            {
+                stateMachine.ChangeState(owner.MoveState);
+                return;
+            }
+
+            // 아직 살아있는 적이 있다면 공격 재시작
+            if (attackTimer <= 0f)
+            {
+                attackTimer = owner.CurrentAttackDelay;
+
+                PlayAttackAnimation();
+            }
         }
 
-        stateMachine.ChangeState(owner.MoveState);
     }
 
     public override void Exit()
     {
+        Debug.Log("어택스테이트 나감");
+
     }
 
     private void PlayAttackAnimation()

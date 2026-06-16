@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.U2D.Animation;
 
 public sealed class PlayerController : MonoBehaviour
 {
@@ -23,7 +24,7 @@ public sealed class PlayerController : MonoBehaviour
     private Collider2D[] attackHitBuffer;
     private Transform cachedTransform;
     private Coroutine flashCoroutine;
-    private Color defaultColor;
+    private Color[] _defaultColors;
 
     // 실시간 연산을 피하기 위한 스탯 캐싱 변수들
     private float currentHp;
@@ -36,8 +37,13 @@ public sealed class PlayerController : MonoBehaviour
     public StateMachine<PlayerController> StateMachine { get; private set; }
     public PlayerMoveState MoveState { get; private set; }
     public PlayerAttackState AttackState { get; private set; }
-    public Animator Anim { get; private set; }
-    public SpriteRenderer SpriteRenderer { get; private set; }
+    
+    public Animator Anim;
+
+    private SpriteRenderer[] spriteRenderers;
+
+    private SpriteResolver[] spriteResolvers;
+
     public PlayerData Data => data;
  
     public int AnimAttackHash { get; private set; }
@@ -52,8 +58,8 @@ public sealed class PlayerController : MonoBehaviour
     {
         cachedTransform = transform;
 
-        Anim = GetComponent<Animator>();
-        SpriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        spriteResolvers = GetComponentsInChildren<SpriteResolver>(true);
 
         AnimAttackHash = Animator.StringToHash(data.AttackAnimationParam);
         AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
@@ -70,8 +76,12 @@ public sealed class PlayerController : MonoBehaviour
         enemyContactFilter.useLayerMask = true; 
         enemyContactFilter.SetLayerMask(enemyLayer);
 
-        defaultColor = SpriteRenderer.color;
-        
+        _defaultColors = new Color[spriteRenderers.Length];
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            _defaultColors[i] = spriteRenderers[i].color;
+        }
+
         GameManager.Instance.RegisterPlayer(this);
     }
 
@@ -113,8 +123,20 @@ public sealed class PlayerController : MonoBehaviour
 
     public bool CheckEnemyInRange()
     {
-        Collider2D hit = Physics2D.OverlapCircle(GetAttackCheckPosition(), data.AttackRange, enemyLayer);
-        return hit != null;
+        Collider2D[] hits = Physics2D.OverlapCircleAll(GetAttackCheckPosition(), data.AttackRange, enemyLayer);
+        foreach (var hit in hits)
+        {
+            EnemyBase enemy = hit.GetComponent<EnemyBase>();
+
+            if (enemy != null)
+            {
+                if (!enemy.IsDead && !enemy.IsSpawning)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void OnAttackSequenceFinished()
@@ -191,9 +213,17 @@ public sealed class PlayerController : MonoBehaviour
 
     private IEnumerator PlayerFlashCo()
     {
-        SpriteRenderer.color = Color.red;
+        foreach (var sr in spriteRenderers)
+        {
+            sr.color = Color.red;
+        }
+
         yield return HitFlashDelay;
-        SpriteRenderer.color = defaultColor;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            spriteRenderers[i].color = _defaultColors[i];
+        }
 
         flashCoroutine = null;
     }
