@@ -78,17 +78,8 @@ public abstract class EnemyBase : Poolable, IDamageable
         currentHp = Data.Hp;
 
         TargetPlayer = GameManager.Instance.Player;
-        
-        string randomLabel = Data.GetRandomLabel();
-        if (!string.IsNullOrEmpty(randomLabel))
-        {
-            foreach (var resolver in _resolvers)
-            {
-                string category = resolver.GetCategory();
-                string fullLabelName = $"{category.ToLower()}_{randomLabel}";
-                resolver.SetCategoryAndLabel(category, fullLabelName);
-            }
-        }
+
+        ApplyRandomSkin();
 
         Anim.Rebind();
         Anim.Update(0f);
@@ -96,7 +87,21 @@ public abstract class EnemyBase : Poolable, IDamageable
         StartCoroutine(SpawnRoutine()); // 태어난 직후 잠시 무적/감지불가
         StateMachine.Initialize(ChaseState);
     }
+    private void ApplyRandomSkin()
+    {
+        string randomLabel = Data.GetRandomLabel();
+        if (string.IsNullOrEmpty(randomLabel) || _resolvers == null) return; // 코드가 한결 깔끔해짐
 
+        foreach (var resolver in _resolvers)
+        {
+            if (resolver == null) continue;
+
+            string category = resolver.GetCategory();
+            if (string.IsNullOrEmpty(category)) continue;
+
+            resolver.SetCategoryAndLabel(category, $"{category.ToLower()}_{randomLabel}");
+        }
+    }
     private IEnumerator SpawnRoutine()
     {
         IsSpawning = true;

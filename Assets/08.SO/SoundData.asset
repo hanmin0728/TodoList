@@ -15,4 +15,6 @@ MonoBehaviour:
   BgmList:
   - Type: 1
     Clip: {fileID: 8300000, guid: f63e66a683227384f8392eac6fbc8d84, type: 3}
+  - Type: 3
+    Clip: {fileID: 8300000, guid: 245b627eb2176ad40a976d86dfd956d3, type: 3}
   SfxList: []

@@ -10,6 +10,8 @@ public sealed class EnemySpawner : Singleton<EnemySpawner>
     private int activeEnemyCount;
     private bool isEnemyDataLoaded;
 
+ 
+    
     private void Start()
     {
         if (CSVManager.Instance.IsInitialized)
@@ -69,6 +71,16 @@ public sealed class EnemySpawner : Singleton<EnemySpawner>
     public void OnEnemyDeath()
     {
         activeEnemyCount = Mathf.Max(0, activeEnemyCount - 1);
+    }
+
+    public float GetEnemyMaxHp(int id)
+    {
+        if (enemyDataById.TryGetValue(id, out EnemyData data))
+        {
+            return data.Hp; 
+        }
+        Debug.LogWarning($"[EnemySpawner] ID {id}에 해당하는 데이터를 찾을 수 없습니다.");
+        return 100f; 
     }
 
     private bool EnsureEnemyDataLoaded()

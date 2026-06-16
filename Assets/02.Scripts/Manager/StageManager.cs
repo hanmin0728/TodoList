@@ -1,7 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using UnityEngine;
+
+public enum StageState
+{
+    Normal,
+    Boss,
+    BossFail
+}
 
 public sealed class StageManager : Singleton<StageManager>
 {
@@ -22,6 +30,7 @@ public sealed class StageManager : Singleton<StageManager>
 
     public event Action<int, int> OnWaveChanged;
 
+    private StageState currentState = StageState.Normal;
     public int GetCurrentStageID() => currentStageID;
     public int GetCurrentWaveIndex() => currentWaveIndex;
 
@@ -117,6 +126,14 @@ public sealed class StageManager : Singleton<StageManager>
     {
         isWaveActive = true;
 
+        bool isBossWave = (data.WaveIndex == 4);
+        currentState = isBossWave ? StageState.Boss : StageState.Normal;
+
+        if (currentState == StageState.Boss)
+        {
+            EnterBoss();
+        }
+
         for (int i = 0; i < data.EnemyCount; i++)
         {
             EnemySpawner.Instance.SpawnEnemy(data.EnemyID);
@@ -128,14 +145,36 @@ public sealed class StageManager : Singleton<StageManager>
             yield return null;
         }
 
+        if (currentState == StageState.Boss)
+        {
+            ClearBoss();
+        }
+
         yield return data.IsBossWave ? bossClearDelayWait : normalWaveDelayWait;
 
         isWaveActive = false;
         NextWave();
     }
+    private void EnterBoss()
+    {
+        Debug.Log("[StageManager] 보스 웨이브 진입!");
+        SoundManager.Instance.PlayBGM(SoundEnum.BgmType.Boss);
+
+    }
+    private void ClearBoss()
+    {
+        Debug.Log("[StageManager] 보스 처치 성공!");
+        SoundManager.Instance.PlayBGM(SoundEnum.BgmType.Main);
+    }
 
     private void NextWave()
     {
+        if (currentState == StageState.BossFail)
+        {
+            Debug.Log("[StageManager] 보스전 패배. 재도전 대기 중...");
+            return;
+        }
+
         currentWaveIndex++;
 
         if (currentWaveIndex > 4)

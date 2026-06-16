@@ -7,20 +7,55 @@ public class StageUIManager : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI stageText;
     [SerializeField] private Image stageProgressImage;
-
     [SerializeField] private float fillSpeed = 2.0f;
 
     private Coroutine fillCoroutine;
     private bool isFirstLoad = true;
 
+    [Header("Boss UI")]
+    [SerializeField] private GameObject bossUIContainer;
+    [SerializeField] private Slider bossHPSlider;
+
     private void Awake()
+    {
+        bossUIContainer.SetActive(false);
+    }
+    private void OnEnable()
     {
         if (StageManager.Instance != null)
         {
             StageManager.Instance.OnWaveChanged += UpdateUI;
+            //StageManager.Instance.OnBossHpChanged += UpdateBossHP;
+
         }
     }
 
+    private void OnDisable()
+    {
+        if (StageManager.Instance != null)
+        {
+            StageManager.Instance.OnWaveChanged -= UpdateUI;
+           // StageManager.Instance.OnBossHpChanged -= UpdateBossHP;
+        }
+    }
+
+
+    public void StartBossInit(float maxHp)
+    {
+        bossUIContainer.SetActive(true);
+        bossHPSlider.maxValue = maxHp;
+        bossHPSlider.value = maxHp;
+    }
+
+    private void UpdateBossHP(float currentHp)
+    {
+        bossHPSlider.value = currentHp;
+    }
+
+    public void HideBossUI()
+    {
+        bossUIContainer.SetActive(false);
+    }
 
     private void UpdateUI(int stageID, int waveIndex)
     {
@@ -57,9 +92,8 @@ public class StageUIManager : MonoBehaviour
         }
 
     }
-    private void OnDestroy()
-    {
-        if (StageManager.Instance != null)
-            StageManager.Instance.OnWaveChanged -= UpdateUI;
-    }
+
+  
+
+  
 }
