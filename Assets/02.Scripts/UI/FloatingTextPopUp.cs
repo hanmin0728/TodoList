@@ -7,7 +7,7 @@ public enum TextType
     NormalDamage,
     CriticalDamage,
     GoldDrop,
-    Heal
+    NicknameWarning 
 }
 
 public class FloatingTextPopUp : MonoBehaviour
@@ -17,6 +17,11 @@ public class FloatingTextPopUp : MonoBehaviour
     private const float DamageMoveDuration = 0.4f;
     private const float FadeDelay = 0.5f;
     private const float FadeDuration = 0.3f;
+
+    private const float NicknameWaringTextScale = 1f;
+    private const float NicknameWaringMoveY = 0.25f;
+    private const float NicknameWaringDuration = 0.4f;
+
 
     [SerializeField] private TextMeshProUGUI text;
 
@@ -37,7 +42,7 @@ public class FloatingTextPopUp : MonoBehaviour
 
     public void Setup(string content, TextType type)
     {
-        text.text = content;
+        text.SetText(content);
         Play(type);
     }
 
@@ -70,7 +75,9 @@ public class FloatingTextPopUp : MonoBehaviour
                 AppendDamageTween(sequence);
                 break;
             case TextType.GoldDrop:
-            case TextType.Heal:
+            case TextType.NicknameWarning:
+                text.color = Color.red;
+                AppendNicknameWarningTween(sequence);
                 break;
         }
     }
@@ -79,6 +86,12 @@ public class FloatingTextPopUp : MonoBehaviour
     {
         sequence.Append(transform.DOScale(DamageTextScale, DamageTextScale).SetEase(Ease.OutBack));
         sequence.Join(transform.DOLocalMoveY(DamageMoveY, DamageMoveDuration));
+    }
+
+    private void AppendNicknameWarningTween(Sequence sequence)
+    {
+        sequence.Append(transform.DOScale(NicknameWaringTextScale, NicknameWaringTextScale).SetEase(Ease.OutBack));
+        sequence.Join(transform.DOLocalMoveY(NicknameWaringMoveY, NicknameWaringDuration));
     }
 
     private void Release()

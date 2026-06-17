@@ -1,81 +1,114 @@
 using System;
-using UnityEngine;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
-using Cysharp.Threading.Tasks;
+using Firebase.Database;
+using UnityEngine;
 
-public class AuthService 
+public class AuthService
 {
-    private FirebaseAuth _auth;
-    public FirebaseUser CurrentUser { get; private set; }
+    private FirebaseAuth auth;
+    private DatabaseReference dbRef;
+
+    public FirebaseUser CurrentUser => auth?.CurrentUser;
 
     /// <summary>
-    /// Firebase 초기화 및 익명 로그인 전체 흐름을 실행합니다.
+    /// Firebase 초기화, 로컬에 저장된 토큰이 실제 서버에서도 유효한지 검증
     /// </summary>
-    public async UniTask<bool> InitializeAndSignInAsync()
+    public async UniTask<bool> TryInitializeSessionAsync()
     {
-        // Firebase 라이브러리 종속성 검사
-        bool isReady = await CheckFirebaseDependenciesAsync();
-        if (!isReady) return false;
+        // 기기 호환성 체크
+        var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
+        if (dependencyStatus != DependencyStatus.Available)
+        {
+            Debug.LogError($"[AuthService] Firebase 호환성 오류: {dependencyStatus}");
+            return false;
+        }
+        
+        // 인스턴스 초기화
+        auth = FirebaseAuth.DefaultInstance;
+        dbRef = FirebaseDatabase.DefaultInstance.RootReference;
 
-        _auth = FirebaseAuth.DefaultInstance; 
-
-        // 익명 로그인 시도
-        return await SignInAnonymouslyAsync();
+        // 기존 세션이 있다면 서버와 동기화하여 유효성 확인
+        if (CurrentUser != null)
+        {
+            try
+            {
+                // 서버에 현재 토큰이 살아있는지 확인 (통신 필수)
+                await auth.CurrentUser.ReloadAsync().AsUniTask();
+                return true;
+            }
+            catch
+            {
+                auth.SignOut(); // 토큰 만료 시 로컬 세션 폐기
+                return false;
+            }
+        }
+        return false;
     }
 
-    private async UniTask<bool> CheckFirebaseDependenciesAsync()
+    /// <summary>
+    /// 닉네임 입력 후 '확인' 버튼을 눌렀을 때 호출하여 실제 익명 계정을 서버에 생성
+    /// </summary>
+    public async UniTask<bool> TryCreateAccountAsync(CancellationToken ct)
     {
         try
         {
-            var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
-
-            if (dependencyStatus == DependencyStatus.Available)
-            {
-                Debug.Log("[Firebase] 초기화 성공");
-                return true;
-            }
-
-            Debug.LogError($"[Firebase] 시스템 요구사항을 충족하지 못함: {dependencyStatus}");
-            return false;
+            var result = await auth.SignInAnonymouslyAsync().AsUniTask();
+            return result.User != null;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[Firebase] 초기화 중 예외 발생: {ex.Message}");
+            Debug.LogError($"[AuthService] 계정 생성 실패: {ex.Message}");
             return false;
         }
     }
 
-    private async UniTask<bool> SignInAnonymouslyAsync()
+    /// <summary>
+    /// 계정 생성 후 닉네임 DB 저장에 실패했을 경우, 
+    /// 데이터베이스에 불필요한 UID만 남는 현상을 방지하기 위해 계정을 즉시 삭제합니다.
+    /// </summary>
+    public async UniTask DeleteAccountAsync()
     {
+        if (CurrentUser != null)
+        {
+            Debug.Log("[AuthService] 계정 롤백(삭제) 진행...");
+            await CurrentUser.DeleteAsync().AsUniTask();
+        }
+    }
+
+    /// <summary>
+    /// 서버 DB에 해당 UID로 저장된 닉네임이 있는지 확인 데이터가 없다면 가입을 완료하지 않은 '신규 유저'로 판단
+    /// </summary>
+    public async UniTask<bool> CheckIsNewUserAsync(string uid, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(uid)) return true;
+
         try
         {
-            // 이미 로그인된 상태인지 확인 (자동 로그인)
-            if (_auth.CurrentUser != null)
-            {
-                CurrentUser = _auth.CurrentUser;
-                Debug.Log($"[Firebase] 기존 익명 계정으로 자동 로그인됨. UID: {CurrentUser.UserId}");
-                return true;
-            }
+            var snapshot = await dbRef.Child("users").Child(uid).Child("nickname").GetValueAsync().AsUniTask();
+            return !snapshot.Exists || string.IsNullOrEmpty(snapshot.Value?.ToString());
+        }
+        catch { return true; }
+    }
 
-            // 신규 익명 로그인
-            AuthResult result = await _auth.SignInAnonymouslyAsync().AsUniTask();
-            CurrentUser = result.User;
+    /// <summary>
+    /// 닉네임과 계정 생성 시간을 DB에 저장 닉네임이 성공적으로 저장되면 해당 유저는 정식 유저
+    /// </summary>
+    public async UniTask<bool> SaveNewUserNicknameAsync(string nickname, CancellationToken ct)
+    {
+        if (CurrentUser == null) return false;
 
-            Debug.Log($"[Firebase] 신규 익명 로그인 성공! UID: {CurrentUser.UserId}");
+        try
+        {
+            string uid = CurrentUser.UserId;
+            long createdAtUnix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            await dbRef.Child("users").Child(uid).Child("nickname").SetValueAsync(nickname).AsUniTask();
+            await dbRef.Child("users").Child(uid).Child("createdAt").SetValueAsync(createdAtUnix).AsUniTask();
             return true;
         }
-        catch (FirebaseException ex)
-        {
-            // Firebase 관련 구체적인 에러 코드 처리
-            Debug.LogError($"[Firebase] 로그인 실패 에러코드: {ex.ErrorCode}");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[Firebase] 로그인 중 알 수 없는 오류: {ex.Message}");
-            return false;
-        }
+        catch { return false; }
     }
 }
-
