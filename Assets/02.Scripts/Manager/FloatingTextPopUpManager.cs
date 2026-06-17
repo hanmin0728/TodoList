@@ -13,15 +13,6 @@ public class FloatingTextPopUpManager : Singleton<FloatingTextPopUpManager>
         }
     }
 
-    public void Show(string content, Transform targetParent, TextType type)
-    {
-        GameObject obj = SpawnPopup(targetParent);
-        if (obj != null && obj.TryGetComponent(out FloatingTextPopUp ft))
-        {
-            ft.Setup(content, type);
-        }
-    }
-
     private GameObject SpawnPopup(Transform targetParent)
     {
         if (floatingTextPrefab == null || targetParent == null)

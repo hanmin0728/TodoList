@@ -12,7 +12,7 @@ public enum TextType
 
 public class FloatingTextPopUp : MonoBehaviour
 {
-    private const float DamageTextScale = 0.006f;
+    private const float DamageTextScale = 0.0082f;
     private const float DamageMoveY = 0.25f;
     private const float DamageMoveDuration = 0.4f;
     private const float FadeDelay = 0.5f;

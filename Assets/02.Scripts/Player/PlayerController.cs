@@ -50,6 +50,7 @@ public sealed class PlayerController : MonoBehaviour
     public int AnimMoveHash { get; private set; }
     public int AnimIdleHash { get; private set; }
     public bool IsAttackAnimationFinished { get; set; } = true;
+    public int AnimAttackSpeedHash { get; private set; } 
 
     public float CurrentAttackDelay => cachedAttackDelay;
 
@@ -64,7 +65,9 @@ public sealed class PlayerController : MonoBehaviour
         AnimAttackHash = Animator.StringToHash(data.AttackAnimationParam);
         AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
         AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
-        AnimIdleHash = Animator.StringToHash(data.IdleAnimationParam); 
+        AnimIdleHash = Animator.StringToHash(data.IdleAnimationParam);
+        AnimAttackSpeedHash = Animator.StringToHash(data.AttackSpeedMultiplierParam);
+
 
         attackHitBuffer = new Collider2D[Mathf.Max(1, maxAttackHitCount)];
 
@@ -116,8 +119,13 @@ public sealed class PlayerController : MonoBehaviour
         cachedMaxHp = GetCalculatedStat(HpStatId, data.Hp);
         cachedDamage = GetCalculatedStat(AttackStatId, data.AttackDamage);
         cachedCriticalChance = GetCalculatedStat(CriticalChanceStatId, 0f);
-        cachedCriticalDamage = GetCalculatedStat(CriticalDamageStatId, 2f);
-        cachedAttackDelay = Mathf.Max(0.1f, data.AttackDelay - GetCalculatedStat(AttackSpeedStatId, 0f));
+        cachedCriticalDamage = GetCalculatedStat(CriticalDamageStatId, 150f) / 100f;
+
+        float attackSpeedBonus = GetCalculatedStat(AttackSpeedStatId, 0f);
+        float actualSpeedMultiplier = 1f + attackSpeedBonus;
+        cachedAttackDelay = Mathf.Max(0.05f, data.AttackDelay / actualSpeedMultiplier);
+        float animSpeedMultiplier = data.AttackDelay / cachedAttackDelay;
+        Anim.SetFloat(AnimAttackSpeedHash, animSpeedMultiplier);
     }
 
 

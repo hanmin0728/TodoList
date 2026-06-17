@@ -21,3 +21,4 @@ MonoBehaviour:
   attackAnimationParam: PlayerAttack
   moveAnimationParam: PlayerMove
   idleAnimationParam: PlayerIdle
+  attackSpeedMultiplierParam: AttackSpeedMultiplier

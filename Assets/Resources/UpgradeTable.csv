@@ -1,6 +1,6 @@
 ﻿ID,Name,BaseValue,IncreasePerLevel,BaseCost,CostMultiplier,MaxLevel,IsPercentageStat
-Atk,공격력,10,5,100000,1.12,10000,0
+Atk,공격력,10,5,100,1.12,10000,0
 Hp,체력,100,50,100,1.12,10000,0
-AtkSpeed,공격 속도,1,0.05,500,1.5,100,1
-CriticalChance,치명타 확률,0.1,0.1,1000,2,1000,1
+AtkSpeed,공격 속도,1,0.05,500,1.5,50,1
+CriticalChance,치명타 확률,0.1,0.1,1000,1.5,1000,1
 CriticalDamage,치명타 데미지,150,10,1000,1.2,10000,0

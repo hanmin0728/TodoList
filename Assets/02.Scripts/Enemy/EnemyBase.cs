@@ -133,6 +133,11 @@ public abstract class EnemyBase : Poolable, IDamageable
 
         currentHp -= damage;
 
+        if (Data.IsBoss)
+        {
+            StageManager.Instance.NotifyBossHpChanged(currentHp);
+        }
+
         PlayHitEffect();
 
         if (currentHp <= 0f)

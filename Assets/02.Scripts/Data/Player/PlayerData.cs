@@ -18,6 +18,7 @@ public sealed class PlayerData : ScriptableObject
     [SerializeField] private string attackAnimationParam = "PlayerAttack";
     [SerializeField] private string moveAnimationParam = "PlayerMove";
     [SerializeField] private string idleAnimationParam = "PlayerIdle";
+    [SerializeField] private string attackSpeedMultiplierParam = "AttackSpeedMultiplier";
 
     public float ScrollSpeed => scrollSpeed;
     public float Hp => hp;
@@ -28,4 +29,5 @@ public sealed class PlayerData : ScriptableObject
     public string AttackAnimationParam => attackAnimationParam;
     public string MoveAnimationParam => moveAnimationParam;
     public string IdleAnimationParam => idleAnimationParam;
+    public string AttackSpeedMultiplierParam => attackSpeedMultiplierParam;
 }
