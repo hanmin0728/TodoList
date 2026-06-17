@@ -82,6 +82,7 @@ public abstract class EnemyBase : Poolable, IDamageable
         ApplyRandomSkin();
 
         Anim.Rebind();
+        Anim.Play("default");
         Anim.Update(0f);
 
         StartCoroutine(SpawnRoutine()); // 태어난 직후 잠시 무적/감지불가

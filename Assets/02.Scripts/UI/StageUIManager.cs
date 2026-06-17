@@ -12,22 +12,34 @@ public class StageUIManager : MonoBehaviour
     private Coroutine fillCoroutine;
     private bool isFirstLoad = true;
 
+    [SerializeField] private GameObject stageBar;
+
     [Header("Boss UI")]
     [SerializeField] private GameObject bossUIContainer;
     [SerializeField] private Slider bossHPSlider;
+    [SerializeField] private Image timerImage;
+    [SerializeField] private TextMeshProUGUI bossTimerText;
+    [SerializeField] private Button bossRetryBtn;
 
     private void Awake()
     {
         bossUIContainer.SetActive(false);
+        bossRetryBtn.gameObject.SetActive(false);
     }
     private void OnEnable()
     {
         if (StageManager.Instance != null)
         {
             StageManager.Instance.OnWaveChanged += UpdateUI;
-            //StageManager.Instance.OnBossHpChanged += UpdateBossHP;
+            StageManager.Instance.OnBossEnter += StartBossInit;
+            StageManager.Instance.OnBossCleared += HideBossUI;
+            StageManager.Instance.OnBossHpChanged += UpdateBossHP;
 
+            StageManager.Instance.OnBossTimerUpdated += UpdateBossTimer;
+            StageManager.Instance.OnBossFailed += HandleBossFailed;
         }
+
+        bossRetryBtn.onClick.AddListener(OnClickBossRetry);
     }
 
     private void OnDisable()
@@ -35,16 +47,39 @@ public class StageUIManager : MonoBehaviour
         if (StageManager.Instance != null)
         {
             StageManager.Instance.OnWaveChanged -= UpdateUI;
-           // StageManager.Instance.OnBossHpChanged -= UpdateBossHP;
+            StageManager.Instance.OnBossEnter -= StartBossInit;
+            StageManager.Instance.OnBossCleared -= HideBossUI;
+            StageManager.Instance.OnBossHpChanged -= UpdateBossHP;
+
+            StageManager.Instance.OnBossTimerUpdated -= UpdateBossTimer;
+            StageManager.Instance.OnBossFailed -= HandleBossFailed;
         }
+
+        bossRetryBtn.onClick.RemoveListener(OnClickBossRetry);
+    }
+    private void HandleBossFailed()
+    {
+        HideBossUI(); 
+        bossRetryBtn.gameObject.SetActive(true);
+    }
+    private void OnClickBossRetry()
+    {
+        bossRetryBtn.gameObject.SetActive(false);
+
+        StageManager.Instance.RequestBossRetry();
     }
 
-
-    public void StartBossInit(float maxHp)
+    private void StartBossInit(float maxHp)
     {
         bossUIContainer.SetActive(true);
+        stageBar.SetActive(false);
         bossHPSlider.maxValue = maxHp;
         bossHPSlider.value = maxHp;
+    }
+    private void UpdateBossTimer(float currentTime, float maxTime)
+    {
+        timerImage.fillAmount = currentTime / maxTime;
+        bossTimerText.SetText(Mathf.Max(0, Mathf.CeilToInt(currentTime)).ToString()); 
     }
 
     private void UpdateBossHP(float currentHp)
@@ -55,6 +90,7 @@ public class StageUIManager : MonoBehaviour
     public void HideBossUI()
     {
         bossUIContainer.SetActive(false);
+        stageBar.SetActive(true);
     }
 
     private void UpdateUI(int stageID, int waveIndex)

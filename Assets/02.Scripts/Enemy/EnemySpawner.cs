@@ -83,6 +83,33 @@ public sealed class EnemySpawner : Singleton<EnemySpawner>
         return 100f; 
     }
 
+    /// <summary>
+    /// 필드에 활성화된 모든 적을 찾아 즉시 풀로 회수 (보스전 실패)
+    /// </summary>
+    public void ClearAllActiveEnemies()
+    {
+        EnemyBase[] enemiesOnField = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+
+        foreach (EnemyBase enemy in enemiesOnField)
+        {
+            if (enemy == null || !enemy.gameObject.activeInHierarchy) continue;
+
+            if (enemy.TryGetComponent(out Poolable poolable))
+            {
+                poolable.Release();
+            }
+            else
+            {
+                // Poolable이 없다면 강제 파괴 (예외 처리)
+                Destroy(enemy.gameObject);
+            }
+        }
+
+        activeEnemyCount = 0;
+        Debug.Log("[EnemySpawner] 필드의 모든 적 제거");
+    }
+
+
     private bool EnsureEnemyDataLoaded()
     {
         if (isEnemyDataLoaded)
