@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.U2D.Animation;
@@ -37,6 +38,7 @@ public sealed class PlayerController : MonoBehaviour
     public StateMachine<PlayerController> StateMachine { get; private set; }
     public PlayerMoveState MoveState { get; private set; }
     public PlayerAttackState AttackState { get; private set; }
+    public PlayerDieState DieState { get; private set; }
     
     public Animator Anim;
 
@@ -47,6 +49,7 @@ public sealed class PlayerController : MonoBehaviour
     public PlayerData Data => data;
  
     public int AnimAttackHash { get; private set; }
+    public int AnimDieHash { get; private set; }
     public int AnimMoveHash { get; private set; }
     public int AnimIdleHash { get; private set; }
     public bool IsAttackAnimationFinished { get; set; } = true;
@@ -54,6 +57,7 @@ public sealed class PlayerController : MonoBehaviour
 
     public float CurrentAttackDelay => cachedAttackDelay;
 
+    public event Action OnPlayerDied;
 
     private void Awake()
     {
@@ -66,6 +70,7 @@ public sealed class PlayerController : MonoBehaviour
         AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
         AnimMoveHash = Animator.StringToHash(data.MoveAnimationParam);
         AnimIdleHash = Animator.StringToHash(data.IdleAnimationParam);
+        AnimDieHash = Animator.StringToHash(data.DieAnimationParam);
         AnimAttackSpeedHash = Animator.StringToHash(data.AttackSpeedMultiplierParam);
 
 
@@ -74,6 +79,7 @@ public sealed class PlayerController : MonoBehaviour
         StateMachine = new StateMachine<PlayerController>();
         MoveState = new PlayerMoveState(this, StateMachine);
         AttackState = new PlayerAttackState(this, StateMachine);
+        DieState = new PlayerDieState(this, StateMachine);
 
         enemyContactFilter = new ContactFilter2D();
         enemyContactFilter.useLayerMask = true; 
@@ -171,13 +177,19 @@ public sealed class PlayerController : MonoBehaviour
         }
     }
 
-  
+    public void Revive()
+    {
+        currentHp = cachedMaxHp; 
+        StateMachine.ChangeState(MoveState);
+    }
     public void TakeDamage(float damage)
     {
         if (damage <= 0f)
             return;
 
         currentHp -= damage;
+
+        //Debug.Log($"damage =  {damage} HP:  {currentHp}");
 
         if (flashCoroutine != null)
         {
@@ -239,6 +251,9 @@ public sealed class PlayerController : MonoBehaviour
     private void Die()
     {
         Debug.Log("[PlayerController] Player died.");
+        StateMachine.ChangeState(DieState);
+
+        OnPlayerDied?.Invoke();
     }
     private void OnDrawGizmosSelected()
     {

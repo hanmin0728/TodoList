@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlayerData
   m_EditorClassIdentifier: Assembly-CSharp::PlayerData
   scrollSpeed: 0.2
-  hp: 100
+  hp: 5
   attackRange: 1.5
   attackDamage: 3
   attackDelay: 3

@@ -12,6 +12,7 @@ public sealed class GameManager : Singleton<GameManager>
     private Transform mainCameraTransform;
 
     public PlayerController Player { get; private set; }
+    
 
     protected override void Awake()
     {
@@ -24,9 +25,28 @@ public sealed class GameManager : Singleton<GameManager>
         TryCacheMainCamera();
     }
 
+    private void OnDestroy()
+    {
+        if (Player != null)
+        {
+            Player.OnPlayerDied -= HandlePlayerDeath;
+        }
+    }
+
     public void RegisterPlayer(PlayerController player)
     {
         Player = player;
+        Player.OnPlayerDied += HandlePlayerDeath;
+    }
+    public void RestartWave()
+    {
+        Player.Revive();
+        StageManager.Instance.ResetToFirstWave();
+    }
+
+    public void HandlePlayerDeath()
+    {
+        StageManager.Instance.StopWave();
     }
 
     public Vector2 EnemySpawnPosition()

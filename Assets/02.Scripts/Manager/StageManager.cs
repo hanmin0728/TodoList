@@ -243,7 +243,30 @@ public sealed class StageManager : Singleton<StageManager>
         StartWave(currentStageID, currentWaveIndex);
     }
 
+    public void ResetToFirstWave()
+    {
+        StopAllCoroutines(); // 진행 중이던 웨이브 루틴 강제 정지
+        isWaveActive = false;
+        EnemySpawner.Instance.ClearAllActiveEnemies();
+        currentState = StageState.Normal; 
+        currentWaveIndex = 1;             
 
+        SaveManager.Instance.CurrentData.SetStageProgress(currentStageID, currentWaveIndex);
+        SaveManager.Instance.SaveGameSync();
+
+        Debug.Log("[StageManager] 게임 다시 시작");
+
+        StartWave(currentStageID, currentWaveIndex); 
+    }
+
+    public void StopWave()
+    {
+        StopAllCoroutines();
+        isWaveActive = false;
+        EnemySpawner.Instance.ClearAllActiveEnemies();
+
+        Debug.Log("[StageManager] 웨이브 중단 및 필드 청소");
+    }
     private void NextWave()
     {
         if (currentState == StageState.BossFail)
