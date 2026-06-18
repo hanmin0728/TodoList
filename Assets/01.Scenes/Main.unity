@@ -7641,6 +7641,7 @@ MonoBehaviour:
       values: 01
     shopLevel: 1
     shopSummonCount: 0
+    LastLoginUnixTime: 0
 --- !u!1 &490031919
 GameObject:
   m_ObjectHideFlags: 0
@@ -10091,7 +10092,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: MinYoung
+  m_text: "\uBC29\uB791\uC790"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a61f233210acfb947bce80f2a02001b2, type: 2}
   m_sharedMaterial: {fileID: 6670887616090037755, guid: a61f233210acfb947bce80f2a02001b2, type: 2}
@@ -16347,6 +16348,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
   diePopUP: {fileID: 663122204}
+  nicknameText: {fileID: 627377709}
 --- !u!1 &1152768382
 GameObject:
   m_ObjectHideFlags: 0

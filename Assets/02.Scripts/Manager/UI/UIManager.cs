@@ -1,5 +1,6 @@
 using NUnit.Framework.Internal;
 using System;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -24,7 +25,10 @@ public class UIManager : MonoBehaviour
             GameManager.Instance.Player.OnPlayerDied -= PlayerDie;
         }
     }
-
+  
+    private void Update()
+    {
+    }
     public void PlayerDie()
     {
         diePopUP.SetActive(true);

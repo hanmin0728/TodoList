@@ -10,7 +10,6 @@ public class AuthService
 {
     private FirebaseAuth auth;
     private DatabaseReference dbRef;
-
     public FirebaseUser CurrentUser => auth?.CurrentUser;
 
     /// <summary>
@@ -96,6 +95,8 @@ public class AuthService
     /// <summary>
     /// 닉네임과 계정 생성 시간을 DB에 저장 닉네임이 성공적으로 저장되면 해당 유저는 정식 유저
     /// </summary>
+    /// 
+
     public async UniTask<bool> SaveNewUserNicknameAsync(string nickname, CancellationToken ct)
     {
         if (CurrentUser == null) return false;

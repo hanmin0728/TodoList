@@ -190,7 +190,6 @@ public sealed class SaveManager : Singleton<SaveManager>
         SaveGameSync();
         await SaveToServerAsync();
     }
-)
     // 초당 골드 계산 로직 
     private float CalculateGoldPerSecond()
     {
