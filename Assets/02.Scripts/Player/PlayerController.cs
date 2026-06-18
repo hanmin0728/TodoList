@@ -123,7 +123,8 @@ public sealed class PlayerController : MonoBehaviour
     {
         StateMachine.Update();
     }
-    // 서버 데이터가 로드되면 능력치만 다시 계산
+
+    // 서버 데이터가 로드되면 능력치 다시 계산
     private void HandleSaveDataLoaded()
     {
         Debug.Log("[PlayerController] 서버 데이터 동기화 완료! 능력치 재계산.");
@@ -210,8 +211,6 @@ public sealed class PlayerController : MonoBehaviour
             return;
 
         currentHp -= damage;
-
-        //Debug.Log($"damage =  {damage} HP:  {currentHp}");
 
         if (flashCoroutine != null)
         {

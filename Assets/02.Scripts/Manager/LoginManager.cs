@@ -70,7 +70,6 @@ public class LoginManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(nickname) || nickname.Length < 2 || nickname.Length > 8)
         {
-            Debug.LogWarning("2글자 이상 8글자 이하로 입력하세요");
             ShowWarningText("2글자 이상 8글자 이하로 입력하세요");
             return;
         }

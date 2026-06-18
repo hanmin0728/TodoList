@@ -3,6 +3,7 @@ using UnityEngine.Pool;
 public class Poolable : MonoBehaviour
 {
     public IObjectPool<GameObject> Pool { get; set; }
+    public GameObject PrefabKey { get; set; }
 
     /// 풀에서 꺼내질 때 초기화 로직 실행
     public virtual void OnSpawn() { }

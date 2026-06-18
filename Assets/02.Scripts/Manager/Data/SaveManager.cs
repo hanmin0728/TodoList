@@ -153,7 +153,10 @@ public sealed class SaveManager : Singleton<SaveManager>
         return (long)snapshot.Value;
     }
 
-    // 오프라인 골드 계산 및 지급
+    /// <summary>
+    /// 오프라인 방치 시간 계산
+    /// </summary>
+    /// <returns></returns>
     public async UniTask CalculateOfflineGoldAsync()
     {
         // 서버 시간 받아오기
@@ -193,7 +196,6 @@ public sealed class SaveManager : Singleton<SaveManager>
     // 초당 골드 계산 로직 
     private float CalculateGoldPerSecond()
     {
-        //스테이지에 따른 수익 공식 추가 필요
         return 10.0f;
     }
 
@@ -256,8 +258,8 @@ public sealed class SaveManager : Singleton<SaveManager>
 
                 await CalculateOfflineGoldAsync();
 
-                SaveGameSync(); // 불러온 데이터를 즉시 로컬 기기에도 저장
-                OnDataLoaded?.Invoke(); // UI 갱신 이벤트
+                SaveGameSync(); 
+                OnDataLoaded?.Invoke(); 
 
                 Debug.Log("[SaveManager] 서버 데이터 로드 및 적용 성공!");
                 return true;

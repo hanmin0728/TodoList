@@ -24,9 +24,16 @@ public sealed class PoolManager : Singleton<PoolManager>
         }
 
         GameObject obj = pool.Get();
-
         obj.transform.SetPositionAndRotation(position, rotation);
-        if (parent != null) obj.transform.SetParent(parent);
+
+        if (parent != null)
+        {
+            obj.transform.SetParent(parent);
+        }
+        else
+        {
+            obj.transform.SetParent(parentsByPrefab[prefab]);
+        }
 
         if (obj.TryGetComponent(out Poolable poolable))
         {
@@ -54,14 +61,12 @@ public sealed class PoolManager : Singleton<PoolManager>
 
     private GameObject CreatePooledObject(GameObject prefab)
     {
-        GameObject obj = Instantiate(prefab, parentsByPrefab[prefab]); 
+        GameObject obj = Instantiate(prefab, parentsByPrefab[prefab]);
 
-        if (!obj.TryGetComponent(out Poolable poolable))
-        {
-            poolable = obj.AddComponent<Poolable>();
-        }
-
+        var poolable = obj.GetComponent<Poolable>() ?? obj.AddComponent<Poolable>();
+        poolable.PrefabKey = prefab;
         poolable.Pool = poolsByPrefab[prefab];
+
         return obj;
     }
 
@@ -74,22 +79,14 @@ public sealed class PoolManager : Singleton<PoolManager>
             poolable.OnDespawn();
         }
 
-        GameObject prefabKey = FindPrefabKeyByObject(obj);
-        if (prefabKey != null) obj.transform.SetParent(parentsByPrefab[prefabKey]);
-
+        if (poolable.PrefabKey != null && parentsByPrefab.TryGetValue(poolable.PrefabKey, out Transform parent))
+        {
+            obj.transform.SetParent(parent);
+        }
         obj.SetActive(false);
     }
 
     private void OnDestroyPoolObject(GameObject obj) => Destroy(obj);
 
-    private GameObject FindPrefabKeyByObject(GameObject obj)
-    {
-        if (!obj.TryGetComponent(out Poolable p) || p.Pool == null) return null;
 
-        foreach (var pair in poolsByPrefab)
-        {
-            if (pair.Value == p.Pool) return pair.Key;
-        }
-        return null;
-    }
 }
