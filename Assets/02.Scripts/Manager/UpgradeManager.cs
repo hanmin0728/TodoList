@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class UpgradeManager : Singleton<UpgradeManager>
 {
+    // 데이터 변경 시 UI를 갱신하기 위한 이벤트 (ID를 넘겨서 해당 셀만 갱신 가능하게 함)
+    public event Action<string> OnUpgradeChanged;
+
     private readonly Dictionary<string, UpgradeData> upgradeDataById = new Dictionary<string, UpgradeData>();
 
     public bool IsInitialized { get; private set; }
@@ -20,7 +24,31 @@ public sealed class UpgradeManager : Singleton<UpgradeManager>
             CSVManager.Instance.OnLoadingComplete += LoadUpgradeData;
         }
     }
+    public bool TryUpgrade(string id)
+    {
+        UpgradeData data = GetUpgradeData(id);
 
+        if (data == null) 
+            return false;
+
+        int currentLevel = SaveManager.Instance.CurrentData.GetUpgradeLevel(id);
+        if (currentLevel >= data.MaxLevel) 
+            return false;
+
+        double cost = data.GetCost(currentLevel);
+        if (!CurrencyManager.Instance.TrySpendGold(cost))
+            return false;
+
+        SaveManager.Instance.CurrentData.SetUpgradeLevel(id, currentLevel + 1);
+
+        SaveManager.Instance.SaveToServerAsync().Forget();
+        SaveManager.Instance.SaveGameSync();
+
+        OnUpgradeChanged?.Invoke(id);
+
+        return true;
+
+    }
     public UpgradeData GetUpgradeData(string id)
     {
         if (upgradeDataById.TryGetValue(id, out UpgradeData data))

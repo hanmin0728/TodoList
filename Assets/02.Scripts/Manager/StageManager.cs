@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
@@ -184,7 +185,7 @@ public sealed class StageManager : Singleton<StageManager>
 
         if (currentState == StageState.Boss)
         {
-            ClearBoss();
+            ClearBoss().Forget();
         }
 
         yield return isBossWave ? bossClearDelayWait : normalWaveDelayWait;
@@ -199,12 +200,23 @@ public sealed class StageManager : Singleton<StageManager>
 
         OnBossEnter?.Invoke(maxHp);
     }
-    private void ClearBoss()
+    private async UniTaskVoid ClearBoss()
     {
         Debug.Log("[StageManager] 보스 처치 성공!");
+
+        try
+        {
+            await SaveManager.Instance.SaveToServerAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[StageManager] 보스 처치 후 서버 저장 실패: {e.Message}");
+        }
+
         SoundManager.Instance.PlayBGM(SoundEnum.BgmType.Main);
         OnBossCleared?.Invoke();
     }
+
     private void FailBoss()
     {
         currentState = StageState.BossFail;

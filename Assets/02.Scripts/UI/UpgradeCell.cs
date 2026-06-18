@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,6 +38,8 @@ public class UpgradeCell : MonoBehaviour
         }
 
         longClickButton.SetClickAction(OnUpgradeClick);
+
+        UpgradeManager.Instance.OnUpgradeChanged += HandleUpgradeChanged;
         CurrencyManager.Instance.OnGoldChanged += RefreshVisual;
 
         UpdateUI();
@@ -44,22 +47,13 @@ public class UpgradeCell : MonoBehaviour
 
     public void OnUpgradeClick()
     {
-        if (data == null || CurrentLevel >= data.MaxLevel)
-        {
-            return;
-        }
-
-        double cost = data.GetCost(CurrentLevel);
-        if (!CurrencyManager.Instance.TrySpendGold(cost))
-        {
-            return;
-        }
-
-        CurrentLevel++;
-        UpdateUI();
-        longClickButton.SetChanged();
+        UpgradeManager.Instance.TryUpgrade(data.ID);
     }
-
+    private void HandleUpgradeChanged(string id)
+    {
+        // 내 ID와 일치할 때만 갱신
+        if (id == data.ID) UpdateUI();
+    }
     public void UpdateUI()
     {
         if (data == null)
@@ -124,7 +118,10 @@ public class UpgradeCell : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (CurrencyManager.HasInstance)
+        if (UpgradeManager.Instance != null)
+            UpgradeManager.Instance.OnUpgradeChanged -= HandleUpgradeChanged;
+
+        if (CurrencyManager.Instance != null)
         {
             CurrencyManager.Instance.OnGoldChanged -= RefreshVisual;
         }

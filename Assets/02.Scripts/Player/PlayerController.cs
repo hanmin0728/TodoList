@@ -104,14 +104,31 @@ public sealed class PlayerController : MonoBehaviour
         {
             UpgradeManager.Instance.OnUpgradeDataLoaded += Init;
         }
-    }
 
+        SaveManager.Instance.OnDataLoaded += HandleSaveDataLoaded;
+        UpgradeManager.Instance.OnUpgradeChanged += HandleUpgradeApplied;
+    }
+    private void OnDestroy()
+    {
+        if (UpgradeManager.Instance != null)
+            UpgradeManager.Instance.OnUpgradeDataLoaded -= Init;
+
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnDataLoaded -= HandleSaveDataLoaded;
+
+        if (UpgradeManager.Instance != null)
+            UpgradeManager.Instance.OnUpgradeChanged -= HandleUpgradeApplied;
+    }
     private void Update()
     {
         StateMachine.Update();
     }
-
-
+    // 서버 데이터가 로드되면 능력치만 다시 계산
+    private void HandleSaveDataLoaded()
+    {
+        Debug.Log("[PlayerController] 서버 데이터 동기화 완료! 능력치 재계산.");
+        UpdateStatsCache();
+    }
     public void Init()
     {
         UpgradeManager.Instance.OnUpgradeDataLoaded -= Init;
@@ -119,7 +136,12 @@ public sealed class PlayerController : MonoBehaviour
         currentHp = cachedMaxHp;
         StateMachine.Initialize(MoveState);
     }
-
+    private void HandleUpgradeApplied(string id)
+    {
+        // 모든 업그레이드마다 스탯을 다시 계산
+        Debug.Log($"[PlayerController] 업그레이드 반영 ({id}): 스탯 재계산 시작");
+        UpdateStatsCache();
+    }
     public void UpdateStatsCache()
     {
         cachedMaxHp = GetCalculatedStat(HpStatId, data.Hp);

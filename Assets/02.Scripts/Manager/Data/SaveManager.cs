@@ -143,6 +143,61 @@ public sealed class SaveManager : Singleton<SaveManager>
     }
     #endregion
 
+    public async UniTask<long> GetServerTimeAsync()
+    {
+        var serverTimeRef = DBRef.Child("ServerTime");
+        await serverTimeRef.SetValueAsync(ServerValue.Timestamp).AsUniTask();
+        var snapshot = await serverTimeRef.GetValueAsync().AsUniTask();
+
+        // 서버 시간(밀리초) 반환
+        return (long)snapshot.Value;
+    }
+
+    // 오프라인 골드 계산 및 지급
+    public async UniTask CalculateOfflineGoldAsync()
+    {
+        // 서버 시간 받아오기
+        long serverTimeMs = await GetServerTimeAsync();
+        long serverTimeSeconds = serverTimeMs / 1000; // 초 단위로 변환
+
+        // 마지막 접속 시간이 0이라면(첫 접속이라면) 현재 시간을 저장하고 종료
+        if (CurrentData.LastLoginUnixTime == 0)
+        {
+            CurrentData.LastLoginUnixTime = serverTimeSeconds;
+            return;
+        }
+
+        // 접속 차이 시간 계산
+        long elapsedSeconds = serverTimeSeconds - CurrentData.LastLoginUnixTime;
+
+        // 8시간(28,800초) 제한 적용
+        long maxSeconds = 8 * 3600;
+        long validSeconds = Math.Min(elapsedSeconds, maxSeconds);
+
+        if (validSeconds > 60) // 최소 1분 이상 지났을 때 지급
+        {
+            float goldPerSecond = CalculateGoldPerSecond();
+            long totalOfflineGold = (long)(goldPerSecond * validSeconds);
+
+            CurrencyManager.Instance.AddGold(totalOfflineGold);
+            Debug.Log($"[오프라인 보상] {totalOfflineGold} 골드 획득!");
+        }
+
+        // 시간 갱신
+        CurrentData.LastLoginUnixTime = serverTimeSeconds;
+
+        // 갱신된 데이터를 로컬/서버에 저장
+        SaveGameSync();
+        await SaveToServerAsync();
+    }
+)
+    // 초당 골드 계산 로직 
+    private float CalculateGoldPerSecond()
+    {
+        //스테이지에 따른 수익 공식 추가 필요
+        return 10.0f;
+    }
+
     #region 클라우드 서버 동기화 (새로 추가된 기능)
 
     /// <summary>
@@ -199,6 +254,8 @@ public sealed class SaveManager : Singleton<SaveManager>
             {
                 string serverJson = snapshot.GetRawJsonValue();
                 CurrentData = JsonUtility.FromJson<SaveData>(serverJson);
+
+                await CalculateOfflineGoldAsync();
 
                 SaveGameSync(); // 불러온 데이터를 즉시 로컬 기기에도 저장
                 OnDataLoaded?.Invoke(); // UI 갱신 이벤트

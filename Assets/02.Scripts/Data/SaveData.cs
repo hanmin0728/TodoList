@@ -21,6 +21,8 @@ public sealed class SaveData
     [SerializeField] private int shopLevel = 1;
     [SerializeField] private int shopSummonCount;
 
+    public long LastLoginUnixTime; // 마지막 접속 시간
+
     public SaveData()
     {
         InitDefaultData();
